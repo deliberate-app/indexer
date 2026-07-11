@@ -23,7 +23,7 @@ type Debate {
   phase: Phase!
   "Whether the debate approved the thesis. Only set once the phase is FINISHED."
   approved: Boolean
-  "Vote tokens committed to the debate's markets (deposits plus net investments)."
+  "Vote tokens committed to the debate's markets (deposits plus net stakes)."
   totalVotes: BigInt!
   argumentsCount: BigInt!
   arguments: [Argument!]! @derivedFrom(field: "debate")
@@ -49,14 +49,14 @@ type Argument {
   "The market's pro reserve. The approval - the pro-share price - is con / (pro + con)."
   pro: BigInt!
   con: BigInt!
-  "Vote tokens invested in this argument's market (deposit plus net investments)."
+  "Vote tokens staked on this argument's market (deposit plus net stakes)."
   votes: BigInt!
   "Unclaimed market fees, claimable by the creator once the debate is finished."
   fees: BigInt!
   "The argument's weighted impact on its parent. Only set once the tally has run."
   impact: BigInt
   children: [Argument!]! @derivedFrom(field: "parent")
-  investments: [Investment!]! @derivedFrom(field: "argument")
+  stakes: [Stake!]! @derivedFrom(field: "argument")
 }
 
 "A debate participant and their vote-token balance, mirrored from the event stream."
@@ -78,14 +78,14 @@ type Position {
   conShares: BigInt!
 }
 
-"One investment into an argument's market (history, append-only)."
-type Investment {
+"One stake on an argument's market (history, append-only)."
+type Stake {
   "`{chainId}_{blockNumber}_{logIndex}`"
   id: ID!
   argument: Argument!
-  investor: String!
+  staker: String!
   isPro: Boolean!
-  voteTokensInvested: BigInt!
+  voteTokensStaked: BigInt!
   fee: BigInt!
   sharesOut: BigInt!
   timestamp: BigInt!

@@ -137,12 +137,12 @@ indexer.onEvent({ contract: "ArborVote", event: "PhaseAdvanced" }, async ({ even
   context.Debate.set({ ...debate, phase });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "Invested" }, async ({ event, context }) => {
-  const { debateId, argumentId, investor, data } = event.params;
-  const net = data.voteTokensInvested - data.fee;
+indexer.onEvent({ contract: "ArborVote", event: "Staked" }, async ({ event, context }) => {
+  const { debateId, argumentId, staker, data } = event.params;
+  const net = data.voteTokensStaked - data.fee;
 
   // The quote fixes the rounding: the bought reserve shrinks by the shares that
-  // leave the pool, the opposite reserve absorbs the net investment.
+  // leave the pool, the opposite reserve absorbs the net stake.
   const argument = await context.Argument.getOrThrow(argumentIdOf(debateId, argumentId));
   context.Argument.set({
     ...argument,
@@ -155,14 +155,14 @@ indexer.onEvent({ contract: "ArborVote", event: "Invested" }, async ({ event, co
   const debate = await context.Debate.getOrThrow(debateId.toString());
   context.Debate.set({ ...debate, totalVotes: debate.totalVotes + net });
 
-  const participant = await context.Participant.getOrThrow(participantIdOf(debateId, investor));
-  context.Participant.set({ ...participant, tokens: participant.tokens - data.voteTokensInvested });
+  const participant = await context.Participant.getOrThrow(participantIdOf(debateId, staker));
+  context.Participant.set({ ...participant, tokens: participant.tokens - data.voteTokensStaked });
 
-  const positionId = positionIdOf(debateId, argumentId, investor);
+  const positionId = positionIdOf(debateId, argumentId, staker);
   const position = (await context.Position.get(positionId)) ?? {
     id: positionId,
     argument_id: argumentIdOf(debateId, argumentId),
-    account: addressOf(investor),
+    account: addressOf(staker),
     proShares: 0n,
     conShares: 0n,
   };
@@ -172,12 +172,12 @@ indexer.onEvent({ contract: "ArborVote", event: "Invested" }, async ({ event, co
     conShares: position.conShares + (data.isPro ? 0n : data.sharesOut),
   });
 
-  context.Investment.set({
+  context.Stake.set({
     id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
     argument_id: argumentIdOf(debateId, argumentId),
-    investor: addressOf(investor),
+    staker: addressOf(staker),
     isPro: data.isPro,
-    voteTokensInvested: data.voteTokensInvested,
+    voteTokensStaked: data.voteTokensStaked,
     fee: data.fee,
     sharesOut: data.sharesOut,
     timestamp: BigInt(event.block.timestamp),

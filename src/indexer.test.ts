@@ -72,12 +72,12 @@ describe("the ArborVote indexer", () => {
             { contract: "ArborVote", event: "PhaseAdvanced", params: { debateId: 0n, newPhase: 2n } },
             {
               contract: "ArborVote",
-              event: "Invested",
+              event: "Staked",
               params: {
                 debateId: 0n,
                 argumentId: 1n,
-                investor: RATER,
-                data: { isPro: false, voteTokensInvested: 20n, fee: 1n, sharesOut: 26n },
+                staker: RATER,
+                data: { isPro: false, voteTokensStaked: 20n, fee: 1n, sharesOut: 26n },
               },
             },
             { contract: "ArborVote", event: "PhaseAdvanced", params: { debateId: 0n, newPhase: 3n } },
@@ -106,7 +106,7 @@ describe("the ArborVote indexer", () => {
     expect(debate.phase).toBe("FINISHED");
     expect(debate.approved).toBe(true);
     expect(debate.argumentsCount).toBe(2n);
-    expect(debate.totalVotes).toBe(29n); // 10 deposit + 19 net investment
+    expect(debate.totalVotes).toBe(29n); // 10 deposit + 19 net stake
 
     const thesis = await indexer.Argument.getOrThrow("0_0");
     expect(thesis.state).toBe("FINAL");
@@ -129,7 +129,7 @@ describe("the ArborVote indexer", () => {
     const author = await indexer.Participant.getOrThrow(`0_${AUTHOR}`);
     expect(author.tokens).toBe(91n); // 100 - 10 deposit + 1 fee
     const rater = await indexer.Participant.getOrThrow(`0_${RATER}`);
-    expect(rater.tokens).toBe(104n); // 100 - 20 invested + 24 payout
+    expect(rater.tokens).toBe(104n); // 100 - 20 staked + 24 payout
 
     const position = await indexer.Position.getOrThrow(`0_1_${RATER}`);
     expect(position.proShares).toBe(0n);

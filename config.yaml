@@ -21,7 +21,7 @@ chains:
     - event: DebateCreated(uint256 indexed debateId, address indexed creator, bytes32 contentURI, uint48 timeUnit, uint48 editingEndTime, uint48 ratingEndTime)
     - event: DebateFinished(uint256 indexed debateId, bool approved)
     - event: FeesClaimed(uint256 indexed debateId, uint16 indexed argumentId, address indexed creator, uint32 fees)
-    - event: Invested(uint256 indexed debateId, uint16 indexed argumentId, address indexed investor, (bool isPro, uint32 voteTokensInvested, uint32 fee, uint32 sharesOut) data)
+    - event: Staked(uint256 indexed debateId, uint16 indexed argumentId, address indexed staker, (bool isPro, uint32 voteTokensStaked, uint32 fee, uint32 sharesOut) data)
     - event: Joined(uint256 indexed debateId, address indexed account, uint32 tokens)
     - event: PhaseAdvanced(uint256 indexed debateId, uint8 newPhase)
     - event: SharesRedeemed(uint256 indexed debateId, uint16 indexed argumentId, address indexed account, uint32 proShares, uint32 conShares, uint32 payout)

@@ -3,7 +3,7 @@
 An [Envio HyperIndex](https://docs.envio.dev) indexer for the ArborVote contract. It folds the
 contract's event stream into queryable domain entities - `Debate`, `Argument` (the tree, with
 market reserves and tally impact), `Participant` (token balances), `Position` (share holdings),
-and the append-only `Investment`/`Redemption` histories - so clients can read a whole debate
+and the append-only `Stake`/`Redemption` histories - so clients can read a whole debate
 in one GraphQL query instead of RPC-traversing the tree leaf by leaf.
 
 Every contract event carries the resulting state (reserves move additively, payouts arrive
