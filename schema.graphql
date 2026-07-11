@@ -1,0 +1,104 @@
+enum Phase {
+  EDITING
+  RATING
+  TALLYING
+  FINISHED
+}
+
+enum ArgumentState {
+  CREATED
+  FINAL
+}
+
+"A debate: its thesis, phase clock, and aggregates. The thesis is the argument with `argumentId` 0."
+type Debate {
+  "The on-chain debate ID."
+  id: ID!
+  creator: String!
+  "The sha-256 multihash digest of the thesis text (an IPFS raw-leaves block)."
+  contentURI: String!
+  timeUnit: BigInt!
+  editingEndTime: BigInt!
+  ratingEndTime: BigInt!
+  phase: Phase!
+  "Whether the debate approved the thesis. Only set once the phase is FINISHED."
+  approved: Boolean
+  "Vote tokens committed to the debate's markets (deposits plus net investments)."
+  totalVotes: BigInt!
+  argumentsCount: BigInt!
+  arguments: [Argument!]! @derivedFrom(field: "debate")
+  participants: [Participant!]! @derivedFrom(field: "debate")
+}
+
+"A node of a debate's argument tree, carrying its market reserves."
+type Argument {
+  "`{debateId}_{argumentId}`"
+  id: ID!
+  debate: Debate!
+  argumentId: BigInt!
+  "The parent argument. Unset for the thesis."
+  parent: Argument
+  creator: String!
+  "Whether the argument supports or opposes its parent. Unset for the thesis."
+  isSupporting: Boolean
+  "The sha-256 multihash digest of the argument text (an IPFS raw-leaves block)."
+  contentURI: String!
+  state: ArgumentState!
+  "The chain time from which the argument can be finalized."
+  finalizationTime: BigInt!
+  "The market's pro reserve. The approval - the pro-share price - is con / (pro + con)."
+  pro: BigInt!
+  con: BigInt!
+  "Vote tokens invested in this argument's market (deposit plus net investments)."
+  votes: BigInt!
+  "Unclaimed market fees, claimable by the creator once the debate is finished."
+  fees: BigInt!
+  "The argument's weighted impact on its parent. Only set once the tally has run."
+  impact: BigInt
+  children: [Argument!]! @derivedFrom(field: "parent")
+  investments: [Investment!]! @derivedFrom(field: "argument")
+}
+
+"A debate participant and their vote-token balance, mirrored from the event stream."
+type Participant {
+  "`{debateId}_{account}`"
+  id: ID!
+  debate: Debate!
+  account: String!
+  tokens: BigInt!
+}
+
+"An account's current share holdings in one argument's market."
+type Position {
+  "`{debateId}_{argumentId}_{account}`"
+  id: ID!
+  argument: Argument!
+  account: String!
+  proShares: BigInt!
+  conShares: BigInt!
+}
+
+"One investment into an argument's market (history, append-only)."
+type Investment {
+  "`{chainId}_{blockNumber}_{logIndex}`"
+  id: ID!
+  argument: Argument!
+  investor: String!
+  isPro: Boolean!
+  voteTokensInvested: BigInt!
+  fee: BigInt!
+  sharesOut: BigInt!
+  timestamp: BigInt!
+}
+
+"One post-debate share redemption (history, append-only)."
+type Redemption {
+  "`{chainId}_{blockNumber}_{logIndex}`"
+  id: ID!
+  argument: Argument!
+  account: String!
+  proShares: BigInt!
+  conShares: BigInt!
+  payout: BigInt!
+  timestamp: BigInt!
+}
