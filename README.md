@@ -33,6 +33,22 @@ The handler tests simulate event streams against an in-memory indexer - the life
 replays the same numbers as the contract unit tests (seed at 80%, rate down, redeem at a
 profit), asserting that the folded entities match the chain exactly.
 
+## Hosted service (Base Sepolia)
+
+`config.base-sepolia.yaml` indexes the Base Sepolia deployment (chain 84532) via HyperSync -
+no RPC endpoint needed. On [envio.dev](https://envio.dev)'s hosted service, with this repo
+connected:
+
+1. In the deployment's settings, set the **config file** to `config.base-sepolia.yaml`
+   (branch `main`, root directory `.`).
+2. After deploying the contracts (contracts README, "Deployment"), fill in the ArborVote
+   address and its deployment block in the config and push - or keep the interpolation and
+   set `ENVIO_ARBORVOTE_ADDRESS` in the **environment variables** tab instead.
+3. Optionally set `ENVIO_PIN_IPFS_API` once a pinning node exists (see below).
+
+Every push to `main` redeploys the indexer. The deployment's GraphQL endpoint (shown in the
+hosted app) becomes the frontend's `VITE_INDEXER_URL`.
+
 ## Production pinning backstop
 
 Argument texts are IPFS raw-leaves blocks whose sha-256 digests are public on-chain. When

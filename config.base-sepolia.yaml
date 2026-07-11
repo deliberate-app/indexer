@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+# The Base Sepolia deployment, indexed by the Envio hosted service (HyperSync, no RPC
+# needed). In the hosted app, point this deployment's "config file" setting here.
+#
+# After deploying the contracts (see contracts README, "Deployment"): set the ArborVote
+# address below - or leave the interpolation and set ENVIO_ARBORVOTE_ADDRESS in the hosted
+# service's environment-variables tab - and set start_block to the deployment block.
+#
+# The event list must stay in sync with config.yaml (the local anvil config).
+name: arborvote-indexer-base-sepolia
+chains:
+- id: 84532
+  start_block: 0 # set to the ArborVote deployment block to skip the empty prefix
+  contracts:
+  - name: ArborVote
+    address:
+    - "${ENVIO_ARBORVOTE_ADDRESS:-0x0000000000000000000000000000000000000000}"
+    events:
+    - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
+    - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)
+    - event: ArgumentFinalized(uint256 indexed debateId, uint16 indexed argumentId)
+    - event: ArgumentImpactCalculated(uint256 indexed debateId, uint16 indexed argumentId, int64 impact)
+    - event: ArgumentMoved(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed newParentArgumentId, uint16 oldParentArgumentId)
+    - event: DebateCreated(uint256 indexed debateId, address indexed creator, bytes32 contentURI, uint48 timeUnit, uint48 editingEndTime, uint48 ratingEndTime)
+    - event: DebateFinished(uint256 indexed debateId, bool approved)
+    - event: FeesClaimed(uint256 indexed debateId, uint16 indexed argumentId, address indexed creator, uint32 fees)
+    - event: Staked(uint256 indexed debateId, uint16 indexed argumentId, address indexed staker, (bool isPro, uint32 voteTokensStaked, uint32 fee, uint32 sharesOut) data)
+    - event: Joined(uint256 indexed debateId, address indexed account, uint32 tokens)
+    - event: PhaseAdvanced(uint256 indexed debateId, uint8 newPhase)
+    - event: SharesRedeemed(uint256 indexed debateId, uint16 indexed argumentId, address indexed account, uint32 proShares, uint32 conShares, uint32 payout)
