@@ -20,11 +20,14 @@ just dev       # run against the local anvil chain (docker: postgres + hasura)
 ```
 
 `just dev` expects the frontend dev stack (`just dev-anvil` in `frontend/`) to be running: it
-indexes chain 31337 at `http://127.0.0.1:8545` from block 0. The dev stack deploys ArborVote
-deterministically, so the contract address in `config.yaml` is stable across runs. Hasura's
-GraphQL console comes up on http://localhost:8090 (moved off 8080, which the dev kubo gateway
-occupies - the `just dev` recipe pins both the container port and envio's metadata endpoint
-there; local password `testing`).
+indexes chain 31337 at `http://127.0.0.1:8545` from block 0. Every `dev-anvil` run writes its
+deployment's address into this repo's `.env` (`ENVIO_ARBORVOTE_ADDRESS`), which `config.yaml`
+interpolates - so the index follows the newest deployment even when a reused anvil moves the
+contract to a fresh nonce. Because the chain is ephemeral, so is the index: `just dev` wipes
+and re-indexes from block 0 on every start (local chains are small; this takes seconds).
+Hasura's GraphQL console comes up on http://localhost:8090 (moved off 8080, which the dev kubo
+gateway occupies - the recipe pins both the container port and envio's metadata endpoint there;
+local password `testing`).
 
 The handler tests simulate event streams against an in-memory indexer - the lifecycle test
 replays the same numbers as the contract unit tests (seed at 80%, rate down, redeem at a
