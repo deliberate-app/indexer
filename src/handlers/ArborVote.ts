@@ -166,6 +166,7 @@ indexer.onEvent({ contract: "ArborVote", event: "Staked" }, async ({ event, cont
   const position = (await context.Position.get(positionId)) ?? {
     id: positionId,
     argument_id: argumentIdOf(debateId, argumentId),
+    participant_id: participantIdOf(debateId, staker),
     account: addressOf(staker),
     proShares: 0n,
     conShares: 0n,

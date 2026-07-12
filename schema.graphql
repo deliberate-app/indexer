@@ -66,6 +66,8 @@ type Participant {
   debate: Debate!
   account: String!
   tokens: BigInt!
+  "The account's share holdings across the debate's arguments; the argumentIds feed `redeemArgumentSharesBatch`."
+  positions: [Position!]! @derivedFrom(field: "participant")
 }
 
 "An account's current share holdings in one argument's market."
@@ -73,6 +75,8 @@ type Position {
   "`{debateId}_{argumentId}_{account}`"
   id: ID!
   argument: Argument!
+  "The participant holding the shares, scoped to this debate."
+  participant: Participant!
   account: String!
   proShares: BigInt!
   conShares: BigInt!

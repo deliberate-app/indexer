@@ -134,6 +134,9 @@ describe("the ArborVote indexer", () => {
     const position = await indexer.Position.getOrThrow(`0_1_${RATER}`);
     expect(position.proShares).toBe(0n);
     expect(position.conShares).toBe(0n); // redeemed
+    // The position links back to its participant, so the debate's positions are
+    // reachable as `Participant.positions` - the array the batch-redeem flow reads.
+    expect(position.participant_id).toBe(`0_${RATER}`);
   });
 
   it("keeps a debate mid-flight consistent while it is still being edited", async () => {
