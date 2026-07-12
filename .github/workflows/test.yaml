@@ -14,6 +14,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    # The handler tests target the local anvil chain (31337); codegen, the type-check,
+    # and the tests all read the config, so point envio at the local config rather than
+    # the default config.yaml (Base Sepolia, which the hosted service deploys).
+    env:
+      ENVIO_CONFIG: config.local.yaml
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
