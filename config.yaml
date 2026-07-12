@@ -10,7 +10,6 @@
 name: arborvote-indexer-base-sepolia
 chains:
   - id: 84532
-    start_block: 44035440 # the ArborVote deployment block - skips the empty prefix
     contracts:
       - name: ArborVote
         address:
