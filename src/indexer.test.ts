@@ -160,7 +160,7 @@ describe("the ArborVote indexer", () => {
     expect(author.tokens).toBe(90n);
   });
 
-  it("moves an argument beneath its new parent", async () => {
+  it("moves an argument beneath its new parent, re-seeding its market", async () => {
     const indexer = createTestIndexer();
 
     await indexer.process({
@@ -174,7 +174,8 @@ describe("the ArborVote indexer", () => {
             {
               contract: "ArborVote",
               event: "ArgumentMoved",
-              params: { debateId: 0n, argumentId: 2n, newParentArgumentId: 1n, oldParentArgumentId: 0n },
+              // Re-seeded at 80% approval: the deposit is re-split 2 pro / 8 con.
+              params: { debateId: 0n, argumentId: 2n, newParentArgumentId: 1n, oldParentArgumentId: 0n, pro: 2n, con: 8n },
             },
           ],
         },
@@ -183,6 +184,9 @@ describe("the ArborVote indexer", () => {
 
     const moved = await indexer.Argument.getOrThrow("0_2");
     expect(moved.parent_id).toBe("0_1");
+    expect(moved.pro).toBe(2n);
+    expect(moved.con).toBe(8n);
+    expect(moved.votes).toBe(10n); // the deposit is unchanged by a move
   });
 });
 

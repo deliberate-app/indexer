@@ -117,9 +117,13 @@ indexer.onEvent({ contract: "ArborVote", event: "ArgumentAltered" }, async ({ ev
 
 indexer.onEvent({ contract: "ArborVote", event: "ArgumentMoved" }, async ({ event, context }) => {
   const argument = await context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId));
+  // The move re-parents the argument and re-seeds its market at a new approval; the deposit
+  // total (and so votes) is unchanged, only the pro/con split.
   context.Argument.set({
     ...argument,
     parent_id: argumentIdOf(event.params.debateId, event.params.newParentArgumentId),
+    pro: event.params.pro,
+    con: event.params.con,
   });
 });
 
