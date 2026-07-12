@@ -1,17 +1,20 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
-name: arborvote-indexer
+# The default config: the Base Sepolia deployment, indexed by the Envio hosted service
+# (HyperSync, no RPC needed). Being config.yaml, the hosted service picks it up by default.
+# Local development uses config.local.yaml instead (see the justfile's dev recipes).
+#
+# The address is the deployed ArborVote (the interpolation lets ENVIO_ARBORVOTE_ADDRESS
+# in the hosted service's environment-variables tab override it for a redeploy).
+#
+# The event list must stay in sync with config.local.yaml (the local anvil config).
+name: arborvote-indexer-base-sepolia
 chains:
-# The local anvil dev chain. Every `just dev-anvil` run in ../frontend writes its
-# deployment's address into .env (ENVIO_ARBORVOTE_ADDRESS) - a reused anvil moves
-# the contract to a fresh nonce, so the address cannot be pinned here. The default
-# is the deterministic first-deploy address of a fresh chain.
-- id: 31337
-  rpc: http://127.0.0.1:8545
-  start_block: 0
+- id: 84532
+  start_block: 44035440 # the ArborVote deployment block - skips the empty prefix
   contracts:
   - name: ArborVote
     address:
-    - "${ENVIO_ARBORVOTE_ADDRESS:-0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512}"
+    - "${ENVIO_ARBORVOTE_ADDRESS:-0xF7421e860a9559a609963AbC4900394134e7AaCf}"
     events:
     - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
     - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)

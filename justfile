@@ -8,6 +8,10 @@ set dotenv-load := true
 # and envio's metadata client must be pointed there explicitly.
 hasura := "HASURA_EXTERNAL_PORT=8090 HASURA_GRAPHQL_ENDPOINT=http://localhost:8090/v1/metadata"
 
+# Local development runs against the anvil chain via config.local.yaml; the default
+# config.yaml is the Base Sepolia config the Envio hosted service deploys.
+config := "config.local.yaml"
+
 # Default recipe
 default:
     @just --list
@@ -16,21 +20,23 @@ default:
 install:
     npm install
 
-# Generate types from config.yaml and schema.graphql
+# Generate types from config.local.yaml and schema.graphql
 codegen:
-    npx envio codegen
+    npx envio codegen --config {{ config }}
 
-# Type-check and run the handler tests (in-memory, no database needed)
+# Type-check and run the handler tests (in-memory, no database needed).
+# The test harness reads the config at runtime to know its chains; point it at the
+# local config (chain 31337), since the default config.yaml is Base Sepolia.
 test:
     npx tsc --noEmit
-    npm test
+    ENVIO_CONFIG={{ config }} npm test
 
 # Run the indexer against the local anvil chain: containers up, index wiped
 # (the chain is ephemeral - so is the index), then indexing from block 0.
 dev:
-    {{ hasura }} npx envio local docker up
-    {{ hasura }} npx envio local db-migrate setup
-    {{ hasura }} ENVIO_TUI_OFF=true npx envio start
+    {{ hasura }} npx envio local docker up --config {{ config }}
+    {{ hasura }} npx envio local db-migrate setup --config {{ config }}
+    {{ hasura }} ENVIO_TUI_OFF=true npx envio start --config {{ config }}
 
 # Stop the indexer's docker stack
 dev-down:
