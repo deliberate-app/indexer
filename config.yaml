@@ -9,22 +9,22 @@
 # The event list must stay in sync with config.local.yaml (the local anvil config).
 name: arborvote-indexer-base-sepolia
 chains:
-- id: 84532
-  start_block: 44035440 # the ArborVote deployment block - skips the empty prefix
-  contracts:
-  - name: ArborVote
-    address:
-    - "${ENVIO_ARBORVOTE_ADDRESS:-0xF7421e860a9559a609963AbC4900394134e7AaCf}"
-    events:
-    - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
-    - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)
-    - event: ArgumentFinalized(uint256 indexed debateId, uint16 indexed argumentId)
-    - event: ArgumentImpactCalculated(uint256 indexed debateId, uint16 indexed argumentId, int64 impact)
-    - event: ArgumentMoved(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed newParentArgumentId, uint16 oldParentArgumentId, uint32 pro, uint32 con)
-    - event: DebateCreated(uint256 indexed debateId, address indexed creator, bytes32 contentURI, uint48 timeUnit, uint48 editingEndTime, uint48 ratingEndTime)
-    - event: DebateFinished(uint256 indexed debateId, bool approved)
-    - event: FeesClaimed(uint256 indexed debateId, uint16 indexed argumentId, address indexed creator, uint32 fees)
-    - event: Staked(uint256 indexed debateId, uint16 indexed argumentId, address indexed staker, (bool isPro, uint32 voteTokensStaked, uint32 fee, uint32 sharesOut) data)
-    - event: Joined(uint256 indexed debateId, address indexed account, uint32 tokens)
-    - event: PhaseAdvanced(uint256 indexed debateId, uint8 newPhase)
-    - event: SharesRedeemed(uint256 indexed debateId, uint16 indexed argumentId, address indexed account, uint32 proShares, uint32 conShares, uint32 payout)
+  - id: 84532
+    start_block: 44035440 # the ArborVote deployment block - skips the empty prefix
+    contracts:
+      - name: ArborVote
+        address:
+          - "${ENVIO_ARBORVOTE_ADDRESS:-0x4C2ff06Dbf50FE059dc47Bdb2a7C7e2887364CFf}"
+        events:
+          - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
+          - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)
+          - event: ArgumentFinalized(uint256 indexed debateId, uint16 indexed argumentId)
+          - event: ArgumentImpactCalculated(uint256 indexed debateId, uint16 indexed argumentId, int64 impact)
+          - event: ArgumentMoved(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed newParentArgumentId, uint16 oldParentArgumentId, uint32 pro, uint32 con)
+          - event: DebateCreated(uint256 indexed debateId, address indexed creator, bytes32 contentURI, uint48 timeUnit, uint48 editingEndTime, uint48 ratingEndTime)
+          - event: DebateFinished(uint256 indexed debateId, bool approved)
+          - event: FeesClaimed(uint256 indexed debateId, uint16 indexed argumentId, address indexed creator, uint32 fees)
+          - event: Staked(uint256 indexed debateId, uint16 indexed argumentId, address indexed staker, (bool isPro, uint32 voteTokensStaked, uint32 fee, uint32 sharesOut) data)
+          - event: Joined(uint256 indexed debateId, address indexed account, uint32 tokens)
+          - event: PhaseAdvanced(uint256 indexed debateId, uint8 newPhase)
+          - event: SharesRedeemed(uint256 indexed debateId, uint16 indexed argumentId, address indexed account, uint32 proShares, uint32 conShares, uint32 payout)
