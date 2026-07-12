@@ -48,7 +48,6 @@ indexer.onEvent({ contract: "ArborVote", event: "DebateCreated" }, async ({ even
     creator: addressOf(event.params.creator),
     isSupporting: undefined,
     contentURI: event.params.contentURI,
-    state: "FINAL",
     finalizationTime: BigInt(event.block.timestamp),
     pro: 0n,
     con: 0n,
@@ -81,7 +80,6 @@ indexer.onEvent({ contract: "ArborVote", event: "ArgumentAdded" }, async ({ even
     creator: addressOf(event.params.creator),
     isSupporting: event.params.isSupporting,
     contentURI: event.params.contentURI,
-    state: "CREATED",
     finalizationTime,
     pro,
     con,
@@ -125,11 +123,6 @@ indexer.onEvent({ contract: "ArborVote", event: "ArgumentMoved" }, async ({ even
     pro: event.params.pro,
     con: event.params.con,
   });
-});
-
-indexer.onEvent({ contract: "ArborVote", event: "ArgumentFinalized" }, async ({ event, context }) => {
-  const argument = await context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId));
-  context.Argument.set({ ...argument, state: "FINAL" });
 });
 
 indexer.onEvent({ contract: "ArborVote", event: "PhaseAdvanced" }, async ({ event, context }) => {

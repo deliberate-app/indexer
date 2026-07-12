@@ -17,7 +17,6 @@ chains:
     events:
     - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
     - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)
-    - event: ArgumentFinalized(uint256 indexed debateId, uint16 indexed argumentId)
     - event: ArgumentImpactCalculated(uint256 indexed debateId, uint16 indexed argumentId, int64 impact)
     - event: ArgumentMoved(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed newParentArgumentId, uint16 oldParentArgumentId, uint32 pro, uint32 con)
     - event: DebateCreated(uint256 indexed debateId, address indexed creator, bytes32 contentURI, uint48 timeUnit, uint48 editingEndTime, uint48 ratingEndTime)

@@ -68,7 +68,6 @@ describe("the ArborVote indexer", () => {
               event: "ArgumentAltered",
               params: { debateId: 0n, argumentId: 1n, contentURI: ALTERED_URI, finalizationTime: 90n },
             },
-            { contract: "ArborVote", event: "ArgumentFinalized", params: { debateId: 0n, argumentId: 1n } },
             { contract: "ArborVote", event: "PhaseAdvanced", params: { debateId: 0n, newPhase: 2n } },
             {
               contract: "ArborVote",
@@ -109,13 +108,11 @@ describe("the ArborVote indexer", () => {
     expect(debate.totalVotes).toBe(29n); // 10 deposit + 19 net stake
 
     const thesis = await indexer.Argument.getOrThrow("0_0");
-    expect(thesis.state).toBe("FINAL");
     expect(thesis.parent_id).toBeUndefined();
     expect(thesis.contentURI).toBe(THESIS_URI);
 
     const argument = await indexer.Argument.getOrThrow("0_1");
     expect(argument.parent_id).toBe("0_0");
-    expect(argument.state).toBe("FINAL");
     expect(argument.contentURI).toBe(ALTERED_URI);
     expect(argument.finalizationTime).toBe(90n);
     expect(argument.pro).toBe(21n); // 2 + 19 net
@@ -156,7 +153,6 @@ describe("the ArborVote indexer", () => {
     expect(debate.totalVotes).toBe(10n);
 
     const argument = await indexer.Argument.getOrThrow("0_1");
-    expect(argument.state).toBe("CREATED");
     expect(argument.impact).toBeUndefined();
 
     const author = await indexer.Participant.getOrThrow(`0_${AUTHOR}`);

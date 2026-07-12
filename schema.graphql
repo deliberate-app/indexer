@@ -5,11 +5,6 @@ enum Phase {
   FINISHED
 }
 
-enum ArgumentState {
-  CREATED
-  FINAL
-}
-
 "A debate: its thesis, phase clock, and aggregates. The thesis is the argument with `argumentId` 0."
 type Debate {
   "The on-chain debate ID."
@@ -43,8 +38,7 @@ type Argument {
   isSupporting: Boolean
   "The sha-256 multihash digest of the argument text (an IPFS raw-leaves block)."
   contentURI: String!
-  state: ArgumentState!
-  "The chain time from which the argument can be finalized."
+  "The chain time from which the argument counts as final: locked in, tradeable, and tallied."
   finalizationTime: BigInt!
   "The market's pro reserve. The approval - the pro-share price - is con / (pro + con)."
   pro: BigInt!
