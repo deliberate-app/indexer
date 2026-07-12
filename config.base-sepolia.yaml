@@ -2,19 +2,18 @@
 # The Base Sepolia deployment, indexed by the Envio hosted service (HyperSync, no RPC
 # needed). In the hosted app, point this deployment's "config file" setting here.
 #
-# After deploying the contracts (see contracts README, "Deployment"): set the ArborVote
-# address below - or leave the interpolation and set ENVIO_ARBORVOTE_ADDRESS in the hosted
-# service's environment-variables tab - and set start_block to the deployment block.
+# The address is the deployed ArborVote (the interpolation lets ENVIO_ARBORVOTE_ADDRESS
+# in the hosted service's environment-variables tab override it for a redeploy).
 #
 # The event list must stay in sync with config.yaml (the local anvil config).
 name: arborvote-indexer-base-sepolia
 chains:
 - id: 84532
-  start_block: 0 # set to the ArborVote deployment block to skip the empty prefix
+  start_block: 44035440 # the ArborVote deployment block - skips the empty prefix
   contracts:
   - name: ArborVote
     address:
-    - "${ENVIO_ARBORVOTE_ADDRESS:-0x0000000000000000000000000000000000000000}"
+    - "${ENVIO_ARBORVOTE_ADDRESS:-0xF7421e860a9559a609963AbC4900394134e7AaCf}"
     events:
     - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
     - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)
