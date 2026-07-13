@@ -4,16 +4,7 @@
  * pre-rounded), so the handlers mirror the debate without redoing any market math.
  */
 import { indexer } from "envio";
-import type { Debate } from "envio";
 import { pinDigest } from "../pinning";
-
-/** Phase.Status on-chain: 0 Uninitialized, 1 Editing, 2 Rating, 3 Tallying, 4 Finished. */
-const PHASE_BY_STATUS: Record<number, Debate["phase"]> = {
-  1: "EDITING",
-  2: "RATING",
-  3: "TALLYING",
-  4: "FINISHED",
-};
 
 /** Addresses are normalized to lowercase, in entity IDs and fields alike. */
 const addressOf = (raw: string) => raw.toLowerCase();
@@ -33,7 +24,7 @@ indexer.onEvent({ contract: "ArborVote", event: "DebateCreated" }, async ({ even
     timeUnit: event.params.timeUnit,
     editingEndTime: event.params.editingEndTime,
     ratingEndTime: event.params.ratingEndTime,
-    phase: "EDITING",
+    finished: false,
     approved: undefined,
     totalVotes: 0n,
     argumentsCount: 1n,
@@ -125,15 +116,6 @@ indexer.onEvent({ contract: "ArborVote", event: "ArgumentMoved" }, async ({ even
   });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "PhaseAdvanced" }, async ({ event, context }) => {
-  const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
-  const phase = PHASE_BY_STATUS[Number(event.params.newPhase)];
-  if (phase === undefined) {
-    throw new Error(`PhaseAdvanced carried an unknown phase status ${event.params.newPhase}`);
-  }
-  context.Debate.set({ ...debate, phase });
-});
-
 indexer.onEvent({ contract: "ArborVote", event: "Staked" }, async ({ event, context }) => {
   const { debateId, argumentId, staker, data } = event.params;
   const net = data.voteTokensStaked - data.fee;
@@ -189,7 +171,7 @@ indexer.onEvent({ contract: "ArborVote", event: "ArgumentImpactCalculated" }, as
 
 indexer.onEvent({ contract: "ArborVote", event: "DebateFinished" }, async ({ event, context }) => {
   const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
-  context.Debate.set({ ...debate, phase: "FINISHED", approved: event.params.approved });
+  context.Debate.set({ ...debate, finished: true, approved: event.params.approved });
 });
 
 indexer.onEvent({ contract: "ArborVote", event: "SharesRedeemed" }, async ({ event, context }) => {

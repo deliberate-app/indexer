@@ -1,10 +1,3 @@
-enum Phase {
-  EDITING
-  RATING
-  TALLYING
-  FINISHED
-}
-
 "A debate: its thesis, phase clock, and aggregates. The thesis is the argument with `argumentId` 0."
 type Debate {
   "The on-chain debate ID."
@@ -15,8 +8,9 @@ type Debate {
   timeUnit: BigInt!
   editingEndTime: BigInt!
   ratingEndTime: BigInt!
-  phase: Phase!
-  "Whether the debate approved the thesis. Only set once the phase is FINISHED."
+  "Whether the tally has run. Editing, Rating, and Tallying follow from the time gates; this latch is the only stored phase fact, so consumers derive the live phase from the gates and this flag."
+  finished: Boolean!
+  "Whether the debate approved the thesis. Only set once `finished` is true."
   approved: Boolean
   "Vote tokens committed to the debate's markets (deposits plus net stakes)."
   totalVotes: BigInt!

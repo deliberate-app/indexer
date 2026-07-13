@@ -68,7 +68,6 @@ describe("the ArborVote indexer", () => {
               event: "ArgumentAltered",
               params: { debateId: 0n, argumentId: 1n, contentURI: ALTERED_URI, finalizationTime: 90n },
             },
-            { contract: "ArborVote", event: "PhaseAdvanced", params: { debateId: 0n, newPhase: 2n } },
             {
               contract: "ArborVote",
               event: "Staked",
@@ -79,7 +78,6 @@ describe("the ArborVote indexer", () => {
                 data: { isPro: false, voteTokensStaked: 20n, fee: 1n, sharesOut: 26n },
               },
             },
-            { contract: "ArborVote", event: "PhaseAdvanced", params: { debateId: 0n, newPhase: 3n } },
             {
               contract: "ArborVote",
               event: "ArgumentImpactCalculated",
@@ -102,7 +100,7 @@ describe("the ArborVote indexer", () => {
     });
 
     const debate = await indexer.Debate.getOrThrow("0");
-    expect(debate.phase).toBe("FINISHED");
+    expect(debate.finished).toBe(true);
     expect(debate.approved).toBe(true);
     expect(debate.argumentsCount).toBe(2n);
     expect(debate.totalVotes).toBe(29n); // 10 deposit + 19 net stake
@@ -148,7 +146,7 @@ describe("the ArborVote indexer", () => {
     });
 
     const debate = await indexer.Debate.getOrThrow("0");
-    expect(debate.phase).toBe("EDITING");
+    expect(debate.finished).toBe(false);
     expect(debate.approved).toBeUndefined();
     expect(debate.totalVotes).toBe(10n);
 
