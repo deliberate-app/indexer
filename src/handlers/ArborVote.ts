@@ -165,6 +165,8 @@ indexer.onEvent({ contract: "ArborVote", event: "Staked" }, async ({ event, cont
 });
 
 indexer.onEvent({ contract: "ArborVote", event: "ArgumentImpactCalculated" }, async ({ event, context }) => {
+  // The emitted impact is the argument's weighted own rating before its pro/con stance; the signed
+  // contribution to the parent is `isSupporting ? impact : -impact`, recoverable from the stored stance.
   const argument = await context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId));
   context.Argument.set({ ...argument, impact: event.params.impact });
 });
