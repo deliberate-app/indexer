@@ -16,7 +16,7 @@ const debateCreated = {
     debateId: 0n,
     creator: AUTHOR,
     contentURI: THESIS_URI,
-    timeUnit: 60n,
+    lockingDuration: 60n,
     editingEndTime: 420n,
     ratingEndTime: 600n,
   },

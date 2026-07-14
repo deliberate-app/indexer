@@ -21,7 +21,7 @@ indexer.onEvent({ contract: "ArborVote", event: "DebateCreated" }, async ({ even
     id: debateId,
     creator: addressOf(event.params.creator),
     contentURI: event.params.contentURI,
-    timeUnit: event.params.timeUnit,
+    lockingDuration: event.params.lockingDuration,
     editingEndTime: event.params.editingEndTime,
     ratingEndTime: event.params.ratingEndTime,
     finished: false,

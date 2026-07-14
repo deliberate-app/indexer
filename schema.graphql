@@ -5,7 +5,7 @@ type Debate {
   creator: String!
   "The sha-256 multihash digest of the thesis text (an IPFS raw-leaves block)."
   contentURI: String!
-  timeUnit: BigInt!
+  lockingDuration: BigInt!
   editingEndTime: BigInt!
   ratingEndTime: BigInt!
   "Whether the tally has run. Editing, Rating, and Tallying follow from the time gates; this latch is the only stored phase fact, so consumers derive the live phase from the gates and this flag."
