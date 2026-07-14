@@ -28,6 +28,13 @@ indexer.onEvent({ contract: "ArborVote", event: "DebateCreated" }, async ({ even
     approved: undefined,
     totalVotes: 0n,
     argumentsCount: 1n,
+    participantsCount: 0n,
+    finishedAt: undefined,
+    // A creation-attached bounty follows as a BountyFunded event in the same transaction.
+    bountyToken: undefined,
+    bountyPool: 0n,
+    bountyClaimed: 0n,
+    bountySwept: false,
   });
 
   // The thesis is the debate's root argument: final from creation, without a market.
@@ -57,6 +64,9 @@ indexer.onEvent({ contract: "ArborVote", event: "Joined" }, async ({ event, cont
     account: addressOf(event.params.account),
     tokens: event.params.tokens,
   });
+
+  const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
+  context.Debate.set({ ...debate, participantsCount: debate.participantsCount + 1n });
 });
 
 indexer.onEvent({ contract: "ArborVote", event: "ArgumentAdded" }, async ({ event, context }) => {
@@ -173,7 +183,54 @@ indexer.onEvent({ contract: "ArborVote", event: "ArgumentImpactCalculated" }, as
 
 indexer.onEvent({ contract: "ArborVote", event: "DebateFinished" }, async ({ event, context }) => {
   const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
-  context.Debate.set({ ...debate, finished: true, approved: event.params.approved });
+  // The finish time anchors the bounty claim window (CLAIM_WINDOW after it).
+  context.Debate.set({
+    ...debate,
+    finished: true,
+    approved: event.params.approved,
+    finishedAt: BigInt(event.block.timestamp),
+  });
+});
+
+indexer.onEvent({ contract: "ArborVote", event: "BountyFunded" }, async ({ event, context }) => {
+  // The event carries the resulting pool, so funding folds without arithmetic drift; the amount
+  // is what actually arrived (fee-on-transfer tokens fund less than was sent).
+  const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
+  context.Debate.set({
+    ...debate,
+    bountyToken: addressOf(event.params.token),
+    bountyPool: event.params.pool,
+  });
+
+  context.BountyFunding.set({
+    id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
+    debate_id: event.params.debateId.toString(),
+    funder: addressOf(event.params.funder),
+    amount: event.params.amount,
+    pool: event.params.pool,
+    timestamp: BigInt(event.block.timestamp),
+  });
+});
+
+indexer.onEvent({ contract: "ArborVote", event: "BountyClaimed" }, async ({ event, context }) => {
+  // The claim pays ERC-20, not vote tokens - the settle-and-claim's redemptions and fee credits
+  // arrive as their own SharesRedeemed/FeesClaimed events and are folded there.
+  const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
+  context.Debate.set({ ...debate, bountyClaimed: debate.bountyClaimed + event.params.amount });
+
+  context.BountyClaim.set({
+    id: participantIdOf(event.params.debateId, event.params.account),
+    debate_id: event.params.debateId.toString(),
+    account: addressOf(event.params.account),
+    excess: BigInt(event.params.excess),
+    amount: event.params.amount,
+    timestamp: BigInt(event.block.timestamp),
+  });
+});
+
+indexer.onEvent({ contract: "ArborVote", event: "BountySwept" }, async ({ event, context }) => {
+  const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
+  context.Debate.set({ ...debate, bountySwept: true });
 });
 
 indexer.onEvent({ contract: "ArborVote", event: "SharesRedeemed" }, async ({ event, context }) => {

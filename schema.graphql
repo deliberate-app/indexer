@@ -15,8 +15,47 @@ type Debate {
   "Vote tokens committed to the debate's markets (deposits plus net stakes)."
   totalVotes: BigInt!
   argumentsCount: BigInt!
+  "The number of joined accounts - the N in the bounty payout denominator."
+  participantsCount: BigInt!
+  "The chain time the tally ran. Only set once `finished` is true; bounty claims close CLAIM_WINDOW (7 days) after it."
+  finishedAt: BigInt
+  "The ERC-20 the bounty is denominated in. Unset when the debate carries no bounty."
+  bountyToken: String
+  "The total bounty funded (creation deposit plus top-ups), as received."
+  bountyPool: BigInt!
+  "The total bounty paid out to claimants so far."
+  bountyClaimed: BigInt!
+  "Whether the creator has swept the unclaimed remainder."
+  bountySwept: Boolean!
   arguments: [Argument!]! @derivedFrom(field: "debate")
   participants: [Participant!]! @derivedFrom(field: "debate")
+  bountyClaims: [BountyClaim!]! @derivedFrom(field: "debate")
+}
+
+"One participant's bounty claim (one-shot per participant and debate)."
+type BountyClaim {
+  "`{debateId}_{account}`"
+  id: ID!
+  debate: Debate!
+  account: String!
+  "The vote tokens the participant ended with beyond the initial grant."
+  excess: BigInt!
+  "The bounty amount paid out."
+  amount: BigInt!
+  timestamp: BigInt!
+}
+
+"One bounty funding - the creation deposit or a top-up (history, append-only)."
+type BountyFunding {
+  "`{chainId}_{blockNumber}_{logIndex}`"
+  id: ID!
+  debate: Debate!
+  funder: String!
+  "The amount received (after any transfer fee the token takes)."
+  amount: BigInt!
+  "The pool after this funding."
+  pool: BigInt!
+  timestamp: BigInt!
 }
 
 "A node of a debate's argument tree, carrying its market reserves."

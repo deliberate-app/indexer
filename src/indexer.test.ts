@@ -102,7 +102,9 @@ describe("the ArborVote indexer", () => {
     const debate = await indexer.Debate.getOrThrow("0");
     expect(debate.finished).toBe(true);
     expect(debate.approved).toBe(true);
+    expect(debate.finishedAt).toBeDefined();
     expect(debate.argumentsCount).toBe(2n);
+    expect(debate.participantsCount).toBe(2n);
     expect(debate.totalVotes).toBe(29n); // 10 deposit + 19 net stake
 
     const thesis = await indexer.Argument.getOrThrow("0_0");
@@ -132,6 +134,64 @@ describe("the ArborVote indexer", () => {
     // The position links back to its participant, so the debate's positions are
     // reachable as `Participant.positions` - the array the batch-redeem flow reads.
     expect(position.participant_id).toBe(`0_${RATER}`);
+  });
+
+  it("folds the bounty lifecycle: funding, top-up, claim, and sweep", async () => {
+    const indexer = createTestIndexer();
+    const TOKEN = "0x00000000000000000000000000000000000000CC";
+
+    await indexer.process({
+      chains: {
+        31337: {
+          simulate: [
+            debateCreated,
+            // The creation-attached funding arrives as its own event right after DebateCreated.
+            {
+              contract: "ArborVote",
+              event: "BountyFunded",
+              params: { debateId: 0n, funder: AUTHOR, token: TOKEN, amount: 300n, pool: 300n },
+            },
+            joined(AUTHOR),
+            joined(RATER),
+            // A top-up by someone else raises the pool; the event carries the resulting total.
+            {
+              contract: "ArborVote",
+              event: "BountyFunded",
+              params: { debateId: 0n, funder: RATER, token: TOKEN, amount: 50n, pool: 350n },
+            },
+            { contract: "ArborVote", event: "DebateFinished", params: { debateId: 0n, approved: true } },
+            {
+              contract: "ArborVote",
+              event: "BountyClaimed",
+              params: { debateId: 0n, account: RATER, excess: 4n, amount: 7n },
+            },
+            {
+              contract: "ArborVote",
+              event: "BountySwept",
+              params: { debateId: 0n, creator: AUTHOR, amount: 343n },
+            },
+          ],
+        },
+      },
+    });
+
+    const debate = await indexer.Debate.getOrThrow("0");
+    expect(debate.bountyToken).toBe(TOKEN.toLowerCase());
+    expect(debate.bountyPool).toBe(350n);
+    expect(debate.bountyClaimed).toBe(7n);
+    expect(debate.bountySwept).toBe(true);
+    expect(debate.participantsCount).toBe(2n);
+    expect(debate.finishedAt).toBeDefined();
+
+    // The claim is one-shot per participant, so it is keyed like one.
+    const claim = await indexer.BountyClaim.getOrThrow(`0_${RATER}`);
+    expect(claim.debate_id).toBe("0");
+    expect(claim.excess).toBe(4n);
+    expect(claim.amount).toBe(7n);
+
+    // The claim pays ERC-20, never vote tokens.
+    const rater = await indexer.Participant.getOrThrow(`0_${RATER}`);
+    expect(rater.tokens).toBe(100n);
   });
 
   it("keeps a debate mid-flight consistent while it is still being edited", async () => {
