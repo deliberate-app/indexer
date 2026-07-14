@@ -10,6 +10,7 @@
 name: arborvote-indexer-base-sepolia
 chains:
   - id: 84532
+    start_block: 0
     contracts:
       - name: ArborVote
         address:
