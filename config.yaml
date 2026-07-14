@@ -14,7 +14,7 @@ chains:
     contracts:
       - name: ArborVote
         address:
-          - "${ENVIO_ARBORVOTE_ADDRESS:-0x86A06EdA5b87B0C0dC15ebe37F4cDE3C0901CAAD}"
+          - "${ENVIO_ARBORVOTE_ADDRESS:-0xBE64588e31D823dDDC120303c8C4948bFdcDA57B}"
         events:
           - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
           - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)
