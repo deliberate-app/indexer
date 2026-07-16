@@ -10,7 +10,7 @@ const ARGUMENT_URI = `0x${"22".repeat(32)}`;
 const ALTERED_URI = `0x${"33".repeat(32)}`;
 
 const debateCreated = {
-  contract: "ArborVote",
+  contract: "Deliberate",
   event: "DebateCreated",
   params: {
     debateId: 0n,
@@ -23,7 +23,7 @@ const debateCreated = {
 } as const;
 
 const joined = (account: `0x${string}`) => ({
-  contract: "ArborVote",
+  contract: "Deliberate",
   event: "Joined",
   params: { debateId: 0n, account, tokens: 100n },
 }) as const;
@@ -33,7 +33,7 @@ const argumentAdded = (
   parentArgumentId: bigint,
   { pro, con }: { pro: bigint; con: bigint },
 ) => ({
-  contract: "ArborVote",
+  contract: "Deliberate",
   event: "ArgumentAdded",
   params: {
     debateId: 0n,
@@ -48,7 +48,7 @@ const argumentAdded = (
   },
 }) as const;
 
-describe("the ArborVote indexer", () => {
+describe("the Deliberate indexer", () => {
   it("folds a full debate lifecycle into the domain entities", async () => {
     const indexer = createTestIndexer();
 
@@ -64,12 +64,12 @@ describe("the ArborVote indexer", () => {
             joined(RATER),
             argumentAdded(1n, 0n, { pro: 2n, con: 8n }),
             {
-              contract: "ArborVote",
+              contract: "Deliberate",
               event: "ArgumentAltered",
               params: { debateId: 0n, argumentId: 1n, contentURI: ALTERED_URI, finalizationTime: 90n },
             },
             {
-              contract: "ArborVote",
+              contract: "Deliberate",
               event: "Staked",
               params: {
                 debateId: 0n,
@@ -79,18 +79,18 @@ describe("the ArborVote indexer", () => {
               },
             },
             {
-              contract: "ArborVote",
+              contract: "Deliberate",
               event: "ArgumentImpactCalculated",
               params: { debateId: 0n, argumentId: 1n, impact: 90n },
             },
-            { contract: "ArborVote", event: "DebateFinished", params: { debateId: 0n, approved: true } },
+            { contract: "Deliberate", event: "DebateFinished", params: { debateId: 0n, approved: true } },
             {
-              contract: "ArborVote",
+              contract: "Deliberate",
               event: "SharesRedeemed",
               params: { debateId: 0n, argumentId: 1n, account: RATER, proShares: 0n, conShares: 26n, payout: 24n },
             },
             {
-              contract: "ArborVote",
+              contract: "Deliberate",
               event: "FeesClaimed",
               params: { debateId: 0n, argumentId: 1n, creator: AUTHOR, fees: 1n },
             },
@@ -147,7 +147,7 @@ describe("the ArborVote indexer", () => {
             debateCreated,
             // The creation-attached funding arrives as its own event right after DebateCreated.
             {
-              contract: "ArborVote",
+              contract: "Deliberate",
               event: "BountyFunded",
               params: { debateId: 0n, funder: AUTHOR, token: TOKEN, amount: 300n, pool: 300n },
             },
@@ -155,18 +155,18 @@ describe("the ArborVote indexer", () => {
             joined(RATER),
             // A top-up by someone else raises the pool; the event carries the resulting total.
             {
-              contract: "ArborVote",
+              contract: "Deliberate",
               event: "BountyFunded",
               params: { debateId: 0n, funder: RATER, token: TOKEN, amount: 50n, pool: 350n },
             },
-            { contract: "ArborVote", event: "DebateFinished", params: { debateId: 0n, approved: true } },
+            { contract: "Deliberate", event: "DebateFinished", params: { debateId: 0n, approved: true } },
             {
-              contract: "ArborVote",
+              contract: "Deliberate",
               event: "BountyClaimed",
               params: { debateId: 0n, account: RATER, excess: 4n, amount: 7n },
             },
             {
-              contract: "ArborVote",
+              contract: "Deliberate",
               event: "BountySwept",
               params: { debateId: 0n, creator: AUTHOR, amount: 343n },
             },
@@ -229,7 +229,7 @@ describe("the ArborVote indexer", () => {
             argumentAdded(1n, 0n, { pro: 5n, con: 5n }),
             argumentAdded(2n, 0n, { pro: 5n, con: 5n }),
             {
-              contract: "ArborVote",
+              contract: "Deliberate",
               event: "ArgumentMoved",
               // Re-seeded at 80% approval: the deposit is re-split 2 pro / 8 con.
               params: { debateId: 0n, argumentId: 2n, newParentArgumentId: 1n, oldParentArgumentId: 0n, pro: 2n, con: 8n },

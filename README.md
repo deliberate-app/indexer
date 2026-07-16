@@ -1,6 +1,6 @@
-# ArborVote Indexer
+# Deliberate Indexer
 
-An [Envio HyperIndex](https://docs.envio.dev) indexer for the ArborVote contract. It folds the
+An [Envio HyperIndex](https://docs.envio.dev) indexer for the Deliberate contract. It folds the
 contract's event stream into queryable domain entities - `Debate`, `Argument` (the tree, with
 market reserves and tally impact), `Participant` (token balances), `Position` (share holdings),
 and the append-only `Stake`/`Redemption` histories - so clients can read a whole debate
@@ -8,7 +8,7 @@ in one GraphQL query instead of RPC-traversing the tree leaf by leaf.
 
 Every contract event carries the resulting state (reserves move additively, payouts arrive
 pre-rounded), so the handlers mirror the debate without redoing any market math. The event set
-is documented in `contracts/src/interfaces/IArborVote.sol`.
+is documented in `contracts/src/interfaces/IDeliberate.sol`.
 
 ## Develop
 
@@ -26,7 +26,7 @@ default to the hosted config.
 
 `just dev` expects the frontend dev stack (`just dev-anvil` in `frontend/`) to be running: it
 indexes chain 31337 at `http://127.0.0.1:8545` from block 0. Every `dev-anvil` run writes its
-deployment's address into this repo's `.env` (`ENVIO_ARBORVOTE_ADDRESS`), which `config.local.yaml`
+deployment's address into this repo's `.env` (`ENVIO_DELIBERATE_ADDRESS`), which `config.local.yaml`
 interpolates - so the index follows the newest deployment even when a reused anvil moves the
 contract to a fresh nonce. Because the chain is ephemeral, so is the index: `just dev` wipes
 and re-indexes from block 0 on every start (local chains are small; this takes seconds).
@@ -46,8 +46,8 @@ connected:
 
 1. Leave the deployment's **config file** at the default `config.yaml` (branch `main`, root
    directory `.`); the hosted service picks it up automatically.
-2. The ArborVote address and deployment block are already in the config. To point at a
-   redeploy without editing it, set `ENVIO_ARBORVOTE_ADDRESS` in the **environment variables**
+2. The Deliberate address and deployment block are already in the config. To point at a
+   redeploy without editing it, set `ENVIO_DELIBERATE_ADDRESS` in the **environment variables**
    tab instead.
 3. Optionally set `ENVIO_PIN_IPFS_API` once a pinning node exists (see below).
 

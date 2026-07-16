@@ -3,18 +3,18 @@
 # (HyperSync, no RPC needed). Being config.yaml, the hosted service picks it up by default.
 # Local development uses config.local.yaml instead (see the justfile's dev recipes).
 #
-# The address is the deployed ArborVote (the interpolation lets ENVIO_ARBORVOTE_ADDRESS
+# The address is the deployed Deliberate (the interpolation lets ENVIO_DELIBERATE_ADDRESS
 # in the hosted service's environment-variables tab override it for a redeploy).
 #
 # The event list must stay in sync with config.local.yaml (the local anvil config).
-name: arborvote-indexer-base-sepolia
+name: deliberate-indexer-base-sepolia
 chains:
   - id: 84532
-    start_block: 0
+    start_block: 44209963
     contracts:
-      - name: ArborVote
+      - name: Deliberate
         address:
-          - "${ENVIO_ARBORVOTE_ADDRESS:-0x9e8e2565b37E6D3721F10F5Cebd06D9979f34FD9}"
+          - "${ENVIO_DELIBERATE_ADDRESS:-0xFb21fa7dB5323F935F32fA5F958C03BCc5694A5b}"
         events:
           - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
           - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)

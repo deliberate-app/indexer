@@ -1,5 +1,5 @@
 /**
- * Folds the ArborVote event stream into the debate's current state. Every contract
+ * Folds the Deliberate event stream into the debate's current state. Every contract
  * event carries the resulting state (reserves move additively, payouts arrive
  * pre-rounded), so the handlers mirror the debate without redoing any market math.
  */
@@ -14,7 +14,7 @@ const participantIdOf = (debateId: bigint, account: string) => `${debateId}_${ad
 const positionIdOf = (debateId: bigint, argumentId: bigint, account: string) =>
   `${debateId}_${argumentId}_${addressOf(account)}`;
 
-indexer.onEvent({ contract: "ArborVote", event: "DebateCreated" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ event, context }) => {
   const debateId = event.params.debateId.toString();
 
   context.Debate.set({
@@ -57,7 +57,7 @@ indexer.onEvent({ contract: "ArborVote", event: "DebateCreated" }, async ({ even
   pinDigest(event.params.contentURI);
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "Joined" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "Joined" }, async ({ event, context }) => {
   context.Participant.set({
     id: participantIdOf(event.params.debateId, event.params.account),
     debate_id: event.params.debateId.toString(),
@@ -69,7 +69,7 @@ indexer.onEvent({ contract: "ArborVote", event: "Joined" }, async ({ event, cont
   context.Debate.set({ ...debate, participantsCount: debate.participantsCount + 1n });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "ArgumentAdded" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "ArgumentAdded" }, async ({ event, context }) => {
   const { debateId, argumentId, parentArgumentId, pro, con, finalizationTime } = event.params;
   const deposit = pro + con;
 
@@ -103,7 +103,7 @@ indexer.onEvent({ contract: "ArborVote", event: "ArgumentAdded" }, async ({ even
   pinDigest(event.params.contentURI);
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "ArgumentAltered" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "ArgumentAltered" }, async ({ event, context }) => {
   const argument = await context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId));
   context.Argument.set({
     ...argument,
@@ -114,7 +114,7 @@ indexer.onEvent({ contract: "ArborVote", event: "ArgumentAltered" }, async ({ ev
   pinDigest(event.params.contentURI);
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "ArgumentMoved" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "ArgumentMoved" }, async ({ event, context }) => {
   const argument = await context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId));
   // The move re-parents the argument and re-seeds its market at a new approval; the deposit
   // total (and so votes) is unchanged, only the pro/con split.
@@ -126,7 +126,7 @@ indexer.onEvent({ contract: "ArborVote", event: "ArgumentMoved" }, async ({ even
   });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "Staked" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "Staked" }, async ({ event, context }) => {
   const { debateId, argumentId, staker, data } = event.params;
   const net = data.voteTokensStaked - data.fee;
 
@@ -174,14 +174,14 @@ indexer.onEvent({ contract: "ArborVote", event: "Staked" }, async ({ event, cont
   });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "ArgumentImpactCalculated" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "ArgumentImpactCalculated" }, async ({ event, context }) => {
   // The emitted impact is the argument's weighted own rating before its pro/con stance; the signed
   // contribution to the parent is `isSupporting ? impact : -impact`, recoverable from the stored stance.
   const argument = await context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId));
   context.Argument.set({ ...argument, impact: event.params.impact });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "DebateFinished" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "DebateFinished" }, async ({ event, context }) => {
   const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
   // The finish time anchors the bounty claim window (CLAIM_WINDOW after it).
   context.Debate.set({
@@ -192,7 +192,7 @@ indexer.onEvent({ contract: "ArborVote", event: "DebateFinished" }, async ({ eve
   });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "BountyFunded" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "BountyFunded" }, async ({ event, context }) => {
   // The event carries the resulting pool, so funding folds without arithmetic drift; the amount
   // is what actually arrived (fee-on-transfer tokens fund less than was sent).
   const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
@@ -212,7 +212,7 @@ indexer.onEvent({ contract: "ArborVote", event: "BountyFunded" }, async ({ event
   });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "BountyClaimed" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "BountyClaimed" }, async ({ event, context }) => {
   // The claim pays ERC-20, not vote tokens - the settle-and-claim's redemptions and fee credits
   // arrive as their own SharesRedeemed/FeesClaimed events and are folded there.
   const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
@@ -228,12 +228,12 @@ indexer.onEvent({ contract: "ArborVote", event: "BountyClaimed" }, async ({ even
   });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "BountySwept" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "BountySwept" }, async ({ event, context }) => {
   const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
   context.Debate.set({ ...debate, bountySwept: true });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "SharesRedeemed" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "SharesRedeemed" }, async ({ event, context }) => {
   const { debateId, argumentId, account } = event.params;
 
   const participant = await context.Participant.getOrThrow(participantIdOf(debateId, account));
@@ -258,7 +258,7 @@ indexer.onEvent({ contract: "ArborVote", event: "SharesRedeemed" }, async ({ eve
   });
 });
 
-indexer.onEvent({ contract: "ArborVote", event: "FeesClaimed" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "FeesClaimed" }, async ({ event, context }) => {
   const { debateId, argumentId, creator } = event.params;
 
   // The contract zeroes the accrued fees and credits them to the creator.

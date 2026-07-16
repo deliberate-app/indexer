@@ -1,19 +1,19 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
 # The local anvil config, used by the justfile's dev recipes (`just dev`). The default
 # config.yaml targets Base Sepolia for the Envio hosted service.
-name: arborvote-indexer
+name: deliberate-indexer
 chains:
   # The local anvil dev chain. Every `just dev-anvil` run in ../frontend writes its
-  # deployment's address into .env (ENVIO_ARBORVOTE_ADDRESS) - a reused anvil moves
+  # deployment's address into .env (ENVIO_DELIBERATE_ADDRESS) - a reused anvil moves
   # the contract to a fresh nonce, so the address cannot be pinned here. The default
   # is the deterministic first-deploy address of a fresh chain.
   - id: 31337
     rpc: http://127.0.0.1:8545
     start_block: 0
     contracts:
-      - name: ArborVote
+      - name: Deliberate
         address:
-          - "${ENVIO_ARBORVOTE_ADDRESS:-0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512}"
+          - "${ENVIO_DELIBERATE_ADDRESS:-0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512}"
         events:
           - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
           - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)
