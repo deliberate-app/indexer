@@ -24,6 +24,7 @@ indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ eve
     lockingDuration: event.params.lockingDuration,
     editingEndTime: event.params.editingEndTime,
     ratingEndTime: event.params.ratingEndTime,
+    feePercentage: event.params.feePercentage,
     finished: false,
     approved: undefined,
     totalVotes: 0n,

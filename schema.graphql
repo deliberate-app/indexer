@@ -8,6 +8,8 @@ type Debate {
   lockingDuration: BigInt!
   editingEndTime: BigInt!
   ratingEndTime: BigInt!
+  "The debate's market fee in percent, chosen by its creator at creation (0-99)."
+  feePercentage: BigInt!
   "Whether the tally has run. Editing, Rating, and Tallying follow from the time gates; this latch is the only stored phase fact, so consumers derive the live phase from the gates and this flag."
   finished: Boolean!
   "Whether the debate approved the thesis. Only set once `finished` is true."

@@ -19,6 +19,7 @@ const debateCreated = {
     lockingDuration: 60n,
     editingEndTime: 420n,
     ratingEndTime: 600n,
+    feePercentage: 5n,
   },
 } as const;
 
