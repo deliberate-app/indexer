@@ -1,6 +1,6 @@
 # Show commands before running (helps debug failures)
 set shell := ["bash", "-euo", "pipefail", "-c"]
-# .env carries the deployment handoff (ENVIO_ARBORVOTE_ADDRESS, ENVIO_PIN_IPFS_API),
+# .env carries the deployment handoff (ENVIO_DELIBERATE_ADDRESS, ENVIO_PIN_IPFS_API),
 # written by the frontend dev tool; loading it here makes every recipe see it.
 set dotenv-load := true
 
