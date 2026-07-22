@@ -10,11 +10,11 @@
 name: deliberate-indexer-base-sepolia
 chains:
   - id: 84532
-    start_block: 44450110
+    start_block: 44490117
     contracts:
       - name: Deliberate
         address:
-          - "${ENVIO_DELIBERATE_ADDRESS:-0x6f71c01803b8B7960a0B145E574ED210C8fF2513}"
+          - "${ENVIO_DELIBERATE_ADDRESS:-0x329418E3e168B40CEE48BAbE594C82559db81A81}"
         events:
           - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
           - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)

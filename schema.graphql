@@ -82,7 +82,7 @@ type Argument {
   votes: BigInt!
   "Unclaimed market fees, claimable by the creator once the debate is finished."
   fees: BigInt!
-  "The argument's weighted own rating, before its own pro/con stance is applied: its signed contribution to the parent's tally is `isSupporting ? impact : -impact`. Only set once the tally has run."
+  "The argument's tallied rating: own approval and descendants' aggregate blended by the stake behind each (ADR-0011). Its signed pull on the parent is `isSupporting ? impact : -impact`, weighted by its subtree's stake. Only set once the tally has run."
   impact: BigInt
   children: [Argument!]! @derivedFrom(field: "parent")
   stakes: [Stake!]! @derivedFrom(field: "argument")
