@@ -52,7 +52,7 @@ indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ eve
     con: 0n,
     votes: 0n,
     fees: 0n,
-    impact: undefined,
+    rating: undefined,
   });
 
   pinDigest(event.params.contentURI);
@@ -87,7 +87,7 @@ indexer.onEvent({ contract: "Deliberate", event: "ArgumentAdded" }, async ({ eve
     con,
     votes: deposit,
     fees: 0n,
-    impact: undefined,
+    rating: undefined,
   });
 
   const debate = await context.Debate.getOrThrow(debateId.toString());
@@ -175,11 +175,12 @@ indexer.onEvent({ contract: "Deliberate", event: "Staked" }, async ({ event, con
   });
 });
 
-indexer.onEvent({ contract: "Deliberate", event: "ArgumentImpactCalculated" }, async ({ event, context }) => {
-  // The emitted impact is the argument's weighted own rating before its pro/con stance; the signed
-  // contribution to the parent is `isSupporting ? impact : -impact`, recoverable from the stored stance.
+indexer.onEvent({ contract: "Deliberate", event: "ArgumentRated" }, async ({ event, context }) => {
+  // The emitted rating is signed - zero at the market's undecided price, negative meaning refuted.
+  // The sway on the parent is the rating clamped at zero, negated if the argument attacks, both
+  // recoverable from the stored stance; the clamp itself is not stored.
   const argument = await context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId));
-  context.Argument.set({ ...argument, impact: event.params.impact });
+  context.Argument.set({ ...argument, rating: event.params.rating });
 });
 
 indexer.onEvent({ contract: "Deliberate", event: "DebateFinished" }, async ({ event, context }) => {

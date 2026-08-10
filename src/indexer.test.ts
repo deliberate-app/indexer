@@ -81,8 +81,8 @@ describe("the Deliberate indexer", () => {
             },
             {
               contract: "Deliberate",
-              event: "ArgumentImpactCalculated",
-              params: { debateId: 0n, argumentId: 1n, impact: 90n },
+              event: "ArgumentRated",
+              params: { debateId: 0n, argumentId: 1n, rating: 90n },
             },
             { contract: "Deliberate", event: "DebateFinished", params: { debateId: 0n, approved: true } },
             {
@@ -120,7 +120,7 @@ describe("the Deliberate indexer", () => {
     expect(argument.con).toBe(1n); // 8 + 19 - 26 shares out
     expect(argument.votes).toBe(29n);
     expect(argument.fees).toBe(0n); // accrued 1, then claimed
-    expect(argument.impact).toBe(90n);
+    expect(argument.rating).toBe(90n);
 
     // Token balances mirror the chain: the author paid the deposit and claimed
     // the fee, the correcting rater redeemed at a profit.
@@ -212,7 +212,7 @@ describe("the Deliberate indexer", () => {
     expect(debate.totalVotes).toBe(10n);
 
     const argument = await indexer.Argument.getOrThrow("0_1");
-    expect(argument.impact).toBeUndefined();
+    expect(argument.rating).toBeUndefined();
 
     const author = await indexer.Participant.getOrThrow(`0_${AUTHOR}`);
     expect(author.tokens).toBe(90n);
