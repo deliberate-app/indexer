@@ -10,7 +10,7 @@
 name: deliberate-indexer-base-sepolia
 chains:
   - id: 84532
-    start_block: 45464346
+    start_block: 45332762
     contracts:
       - name: Deliberate
         address:
