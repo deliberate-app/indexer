@@ -32,6 +32,7 @@ type Debate {
   arguments: [Argument!]! @derivedFrom(field: "debate")
   participants: [Participant!]! @derivedFrom(field: "debate")
   bountyClaims: [BountyClaim!]! @derivedFrom(field: "debate")
+  bountyFundings: [BountyFunding!]! @derivedFrom(field: "debate")
 }
 
 "One participant's bounty claim (one-shot per participant and debate)."
@@ -82,10 +83,15 @@ type Argument {
   votes: BigInt!
   "Unclaimed market fees, claimable by the creator once the debate is finished."
   fees: BigInt!
+  "Every market fee the argument has ever earned its creator, claimed or not - what staking on it has paid its author over its lifetime."
+  feesEarned: BigInt!
   "The argument's tallied rating: own centered approval and descendants' aggregate blended by the stake behind each, signed - zero is the market's undecided price, negative means refuted (ADR-0012). Its sway on the parent is the rating clamped at zero, negated if it attacks, at its subtree's stake. Only set once the tally has run."
   rating: BigInt
   children: [Argument!]! @derivedFrom(field: "parent")
   stakes: [Stake!]! @derivedFrom(field: "argument")
+  redemptions: [Redemption!]! @derivedFrom(field: "argument")
+  "The share holdings in this argument's market, one per account that has staked on it - zeroed, not removed, once redeemed."
+  positions: [Position!]! @derivedFrom(field: "argument")
 }
 
 "A debate participant and their vote-token balance, mirrored from the event stream."

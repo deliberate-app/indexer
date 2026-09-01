@@ -25,8 +25,8 @@ codegen:
     npx envio codegen --config {{ config }}
 
 # Type-check and run the handler tests (in-memory, no database needed).
-# The test harness reads the config at runtime to know its chains; point it at the
-# local config (chain 31337), since the default config.yaml is Base Sepolia.
+# The tests take their chain from whichever config is loaded, so they pass under either;
+# pointing them at the local config keeps `just test` on the same one as `just dev`.
 test:
     npx tsc --noEmit
     ENVIO_CONFIG={{ config }} npm test

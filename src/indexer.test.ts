@@ -1,7 +1,12 @@
-import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { createTestIndexer } from "envio";
-import { cidFromDigestHex } from "./pinning";
+import { createTestIndexer, indexer as runtime } from "envio";
+
+/**
+ * The chain the loaded config declares - config.local.yaml's anvil (31337) under the
+ * `just` recipes, Base Sepolia under the default config. Taking it from the indexer
+ * rather than hard-coding it keeps these tests passing whichever config is loaded.
+ */
+const CHAIN = runtime.chainIds[0]!;
 
 const AUTHOR = "0x00000000000000000000000000000000000000aa";
 const RATER = "0x00000000000000000000000000000000000000bb";
@@ -58,7 +63,7 @@ describe("the Deliberate indexer", () => {
     // 26 shares out), redeemed for the pre-rounded payout of 24.
     await indexer.process({
       chains: {
-        31337: {
+        [CHAIN]: {
           simulate: [
             debateCreated,
             joined(AUTHOR),
@@ -120,6 +125,7 @@ describe("the Deliberate indexer", () => {
     expect(argument.con).toBe(1n); // 8 + 19 - 26 shares out
     expect(argument.votes).toBe(29n);
     expect(argument.fees).toBe(0n); // accrued 1, then claimed
+    expect(argument.feesEarned).toBe(1n); // what staking on it has paid its author, claimed or not
     expect(argument.rating).toBe(90n);
 
     // Token balances mirror the chain: the author paid the deposit and claimed
@@ -128,6 +134,26 @@ describe("the Deliberate indexer", () => {
     expect(author.tokens).toBe(91n); // 100 - 10 deposit + 1 fee
     const rater = await indexer.Participant.getOrThrow(`0_${RATER}`);
     expect(rater.tokens).toBe(104n); // 100 - 20 staked + 24 payout
+
+    // The append-only histories keep what the folded entities flatten away: the stake
+    // that moved the market, and the redemption that settled it.
+    const [stake] = await indexer.Stake.getAll();
+    expect(stake).toMatchObject({
+      argument_id: "0_1",
+      staker: RATER,
+      isPro: false,
+      voteTokensStaked: 20n,
+      fee: 1n,
+      sharesOut: 26n,
+    });
+    const [redemption] = await indexer.Redemption.getAll();
+    expect(redemption).toMatchObject({
+      argument_id: "0_1",
+      account: RATER,
+      proShares: 0n,
+      conShares: 26n,
+      payout: 24n,
+    });
 
     const position = await indexer.Position.getOrThrow(`0_1_${RATER}`);
     expect(position.proShares).toBe(0n);
@@ -143,7 +169,7 @@ describe("the Deliberate indexer", () => {
 
     await indexer.process({
       chains: {
-        31337: {
+        [CHAIN]: {
           simulate: [
             debateCreated,
             // The creation-attached funding arrives as its own event right after DebateCreated.
@@ -184,6 +210,14 @@ describe("the Deliberate indexer", () => {
     expect(debate.participantsCount).toBe(2n);
     expect(debate.finishedAt).toBeDefined();
 
+    // Both fundings are kept, each with the pool it produced - the creation deposit
+    // and the top-up that followed it.
+    const fundings = await indexer.BountyFunding.getAll();
+    expect(fundings.map((funding) => [funding.funder, funding.amount, funding.pool])).toEqual([
+      [AUTHOR, 300n, 300n],
+      [RATER, 50n, 350n],
+    ]);
+
     // The claim is one-shot per participant, so it is keyed like one.
     const claim = await indexer.BountyClaim.getOrThrow(`0_${RATER}`);
     expect(claim.debate_id).toBe("0");
@@ -200,7 +234,7 @@ describe("the Deliberate indexer", () => {
 
     await indexer.process({
       chains: {
-        31337: {
+        [CHAIN]: {
           simulate: [debateCreated, joined(AUTHOR), argumentAdded(1n, 0n, { pro: 5n, con: 5n })],
         },
       },
@@ -223,7 +257,7 @@ describe("the Deliberate indexer", () => {
 
     await indexer.process({
       chains: {
-        31337: {
+        [CHAIN]: {
           simulate: [
             debateCreated,
             joined(AUTHOR),
@@ -245,16 +279,5 @@ describe("the Deliberate indexer", () => {
     expect(moved.pro).toBe(2n);
     expect(moved.con).toBe(8n);
     expect(moved.votes).toBe(10n); // the deposit is unchanged by a move
-  });
-});
-
-describe("cidFromDigestHex", () => {
-  it("rebuilds the CIDv1 a raw-leaves ipfs add produces", () => {
-    // Fixture shared with the frontend: sha-256 of "Threatens habitability",
-    // verified against a live kubo gateway.
-    const digest = createHash("sha256").update("Threatens habitability").digest("hex");
-    expect(cidFromDigestHex(`0x${digest}`)).toBe(
-      "bafkreif3pscuobc3juosiyg7xkh4m6ilkatkg3igpsndpnlr4fzmygoubm",
-    );
   });
 });

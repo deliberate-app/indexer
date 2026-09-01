@@ -2,9 +2,9 @@
 
 An [Envio HyperIndex](https://docs.envio.dev) indexer for the Deliberate contract. It folds the
 contract's event stream into queryable domain entities - `Debate`, `Argument` (the tree, with
-market reserves and tally impact), `Participant` (token balances), `Position` (share holdings),
-and the append-only `Stake`/`Redemption` histories - so clients can read a whole debate
-in one GraphQL query instead of RPC-traversing the tree leaf by leaf.
+market reserves, earned fees, and its tallied rating), `Participant` (token balances), `Position`
+(share holdings), and the append-only `Stake`/`Redemption`/`BountyFunding` histories - so clients
+can read a whole debate in one GraphQL query instead of RPC-traversing the tree leaf by leaf.
 
 Every contract event carries the resulting state (reserves move additively, payouts arrive
 pre-rounded), so the handlers mirror the debate without redoing any market math. The event set
@@ -36,7 +36,8 @@ local password `testing`).
 
 The handler tests simulate event streams against an in-memory indexer - the lifecycle test
 replays the same numbers as the contract unit tests (seed at 80%, rate down, redeem at a
-profit), asserting that the folded entities match the chain exactly.
+profit), asserting that the folded entities match the chain exactly. `config.test.ts` guards
+the one thing the two configs must share: the event list, which would otherwise drift silently.
 
 ## Hosted service (Base Sepolia)
 
@@ -60,8 +61,15 @@ Argument texts are IPFS raw-leaves blocks whose sha-256 digests are public on-ch
 `ENVIO_PIN_IPFS_API` is set (e.g. `http://127.0.0.1:5001`), the indexer re-pins every content
 digest it sees - debate theses, added and altered arguments - on that kubo-compatible node, so
 content availability never depends on the authoring client alone (see the frontend README,
-"Production pinning strategy"). Pinning is idempotent and best-effort: a failure never stalls
-indexing, and the next resync retries.
+"Production pinning strategy").
+
+The request goes through envio's Effect API (`src/pinning.ts`), which is what makes it exactly
+one call per distinct text: handlers run twice - once concurrently to preload, once to fold -
+and an effect is deduplicated across both, across the whole batch, and (through its cache)
+across reruns, so a resync does not re-ask for every text the node already holds. Pinning stays
+idempotent and best-effort: the call is capped by a timeout, only an acknowledged pin is cached,
+and a node that is down, slow, or missing the block never stalls or crashes indexing - the next
+event or resync asks again.
 
 ## Prerequisites
 

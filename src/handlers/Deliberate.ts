@@ -2,6 +2,12 @@
  * Folds the Deliberate event stream into the debate's current state. Every contract
  * event carries the resulting state (reserves move additively, payouts arrive
  * pre-rounded), so the handlers mirror the debate without redoing any market math.
+ *
+ * Every handler opens with a single wave of reads (and, where a text is involved, the
+ * pin request). Handlers run twice - once concurrently across the whole batch to warm
+ * the caches, once sequentially to fold - and it is that first pass that turns a wave
+ * of `Promise.all` reads into one batched query per entity for the entire batch, where
+ * awaiting them one after another would cost a round trip each.
  */
 import { indexer } from "envio";
 import { pinDigest } from "../pinning";
@@ -16,6 +22,8 @@ const positionIdOf = (debateId: bigint, argumentId: bigint, account: string) =>
 
 indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ event, context }) => {
   const debateId = event.params.debateId.toString();
+
+  await pinDigest(context, event.params.contentURI);
 
   context.Debate.set({
     id: debateId,
@@ -52,13 +60,14 @@ indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ eve
     con: 0n,
     votes: 0n,
     fees: 0n,
+    feesEarned: 0n,
     rating: undefined,
   });
-
-  pinDigest(event.params.contentURI);
 });
 
 indexer.onEvent({ contract: "Deliberate", event: "Joined" }, async ({ event, context }) => {
+  const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
+
   context.Participant.set({
     id: participantIdOf(event.params.debateId, event.params.account),
     debate_id: event.params.debateId.toString(),
@@ -66,13 +75,21 @@ indexer.onEvent({ contract: "Deliberate", event: "Joined" }, async ({ event, con
     tokens: event.params.tokens,
   });
 
-  const debate = await context.Debate.getOrThrow(event.params.debateId.toString());
+  // Joining is one-shot per account and debate (the contract rejects a second one),
+  // so every event is a new participant.
   context.Debate.set({ ...debate, participantsCount: debate.participantsCount + 1n });
 });
 
 indexer.onEvent({ contract: "Deliberate", event: "ArgumentAdded" }, async ({ event, context }) => {
   const { debateId, argumentId, parentArgumentId, pro, con, finalizationTime } = event.params;
+  // The creator's deposit seeds the market; the split is lossless, so the two reserves are it.
   const deposit = pro + con;
+
+  const [debate, participant] = await Promise.all([
+    context.Debate.getOrThrow(debateId.toString()),
+    context.Participant.getOrThrow(participantIdOf(debateId, event.params.creator)),
+    pinDigest(context, event.params.contentURI),
+  ]);
 
   context.Argument.set({
     id: argumentIdOf(debateId, argumentId),
@@ -87,32 +104,30 @@ indexer.onEvent({ contract: "Deliberate", event: "ArgumentAdded" }, async ({ eve
     con,
     votes: deposit,
     fees: 0n,
+    feesEarned: 0n,
     rating: undefined,
   });
 
-  const debate = await context.Debate.getOrThrow(debateId.toString());
   context.Debate.set({
     ...debate,
     argumentsCount: debate.argumentsCount + 1n,
     totalVotes: debate.totalVotes + deposit,
   });
 
-  // The creator pays the deposit that seeds the argument's market.
-  const participant = await context.Participant.getOrThrow(participantIdOf(debateId, event.params.creator));
   context.Participant.set({ ...participant, tokens: participant.tokens - deposit });
-
-  pinDigest(event.params.contentURI);
 });
 
 indexer.onEvent({ contract: "Deliberate", event: "ArgumentAltered" }, async ({ event, context }) => {
-  const argument = await context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId));
+  const [argument] = await Promise.all([
+    context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId)),
+    pinDigest(context, event.params.contentURI),
+  ]);
+
   context.Argument.set({
     ...argument,
     contentURI: event.params.contentURI,
     finalizationTime: event.params.finalizationTime,
   });
-
-  pinDigest(event.params.contentURI);
 });
 
 indexer.onEvent({ contract: "Deliberate", event: "ArgumentMoved" }, async ({ event, context }) => {
@@ -130,26 +145,31 @@ indexer.onEvent({ contract: "Deliberate", event: "ArgumentMoved" }, async ({ eve
 indexer.onEvent({ contract: "Deliberate", event: "Staked" }, async ({ event, context }) => {
   const { debateId, argumentId, staker, data } = event.params;
   const net = data.voteTokensStaked - data.fee;
+  const positionId = positionIdOf(debateId, argumentId, staker);
+
+  const [argument, debate, participant, held] = await Promise.all([
+    context.Argument.getOrThrow(argumentIdOf(debateId, argumentId)),
+    context.Debate.getOrThrow(debateId.toString()),
+    context.Participant.getOrThrow(participantIdOf(debateId, staker)),
+    context.Position.get(positionId),
+  ]);
 
   // The quote fixes the rounding: the bought reserve shrinks by the shares that
   // leave the pool, the opposite reserve absorbs the net stake.
-  const argument = await context.Argument.getOrThrow(argumentIdOf(debateId, argumentId));
   context.Argument.set({
     ...argument,
     pro: data.isPro ? argument.pro + net - data.sharesOut : argument.pro + net,
     con: data.isPro ? argument.con + net : argument.con + net - data.sharesOut,
     votes: argument.votes + net,
     fees: argument.fees + data.fee,
+    feesEarned: argument.feesEarned + data.fee,
   });
 
-  const debate = await context.Debate.getOrThrow(debateId.toString());
   context.Debate.set({ ...debate, totalVotes: debate.totalVotes + net });
 
-  const participant = await context.Participant.getOrThrow(participantIdOf(debateId, staker));
   context.Participant.set({ ...participant, tokens: participant.tokens - data.voteTokensStaked });
 
-  const positionId = positionIdOf(debateId, argumentId, staker);
-  const position = (await context.Position.get(positionId)) ?? {
+  const position = held ?? {
     id: positionId,
     argument_id: argumentIdOf(debateId, argumentId),
     participant_id: participantIdOf(debateId, staker),
@@ -224,7 +244,7 @@ indexer.onEvent({ contract: "Deliberate", event: "BountyClaimed" }, async ({ eve
     id: participantIdOf(event.params.debateId, event.params.account),
     debate_id: event.params.debateId.toString(),
     account: addressOf(event.params.account),
-    excess: BigInt(event.params.excess),
+    excess: event.params.excess,
     amount: event.params.amount,
     timestamp: BigInt(event.block.timestamp),
   });
@@ -238,11 +258,14 @@ indexer.onEvent({ contract: "Deliberate", event: "BountySwept" }, async ({ event
 indexer.onEvent({ contract: "Deliberate", event: "SharesRedeemed" }, async ({ event, context }) => {
   const { debateId, argumentId, account } = event.params;
 
-  const participant = await context.Participant.getOrThrow(participantIdOf(debateId, account));
+  const [participant, position] = await Promise.all([
+    context.Participant.getOrThrow(participantIdOf(debateId, account)),
+    // The contract zeroes every redeemed side; the event carries exactly what was held.
+    context.Position.getOrThrow(positionIdOf(debateId, argumentId, account)),
+  ]);
+
   context.Participant.set({ ...participant, tokens: participant.tokens + event.params.payout });
 
-  // The contract zeroes every redeemed side; the event carries exactly what was held.
-  const position = await context.Position.getOrThrow(positionIdOf(debateId, argumentId, account));
   context.Position.set({
     ...position,
     proShares: position.proShares - event.params.proShares,
@@ -263,10 +286,14 @@ indexer.onEvent({ contract: "Deliberate", event: "SharesRedeemed" }, async ({ ev
 indexer.onEvent({ contract: "Deliberate", event: "FeesClaimed" }, async ({ event, context }) => {
   const { debateId, argumentId, creator } = event.params;
 
-  // The contract zeroes the accrued fees and credits them to the creator.
-  const argument = await context.Argument.getOrThrow(argumentIdOf(debateId, argumentId));
+  const [argument, participant] = await Promise.all([
+    context.Argument.getOrThrow(argumentIdOf(debateId, argumentId)),
+    context.Participant.getOrThrow(participantIdOf(debateId, creator)),
+  ]);
+
+  // The contract zeroes the accrued fees and credits them to the creator; `feesEarned`
+  // is the lifetime total and stands.
   context.Argument.set({ ...argument, fees: 0n });
 
-  const participant = await context.Participant.getOrThrow(participantIdOf(debateId, creator));
   context.Participant.set({ ...participant, tokens: participant.tokens + event.params.fees });
 });
