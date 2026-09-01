@@ -1,20 +1,23 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
-# The default config: the Base Sepolia deployment, indexed by the Envio hosted service
-# (HyperSync, no RPC needed). Being config.yaml, the hosted service picks it up by default.
-# Local development uses config.local.yaml instead (see the justfile's dev recipes).
+# The default config: the Gnosis Chain deployment, indexed by the Envio hosted service (HyperSync, no RPC needed).
 #
-# The address is the deployed Deliberate (the interpolation lets ENVIO_DELIBERATE_ADDRESS
-# in the hosted service's environment-variables tab override it for a redeploy).
+# One indexer per network, each from its own config: debate ids restart at zero on every
+# deployment, so two chains in one config would collide on entity ids. The frontend reads each
+# network through its own proxy route (/api/graphql/<slug>) for the same reason.
+#
+# The address is the deployed Deliberate (the interpolation lets ENVIO_DELIBERATE_ADDRESS in the
+# hosted service's environment-variables tab override it). The start block is the deployment's
+# block; set both from the broadcast record after deploying.
 #
 # The event list must stay in sync with config.local.yaml (the local anvil config).
-name: deliberate-indexer-base-sepolia
+name: deliberate-indexer-gnosis
 chains:
-  - id: 84532
-    start_block: 45485355
+  - id: 100
+    start_block: 0  # set to the deployment block after deploying
     contracts:
       - name: Deliberate
         address:
-          - "${ENVIO_DELIBERATE_ADDRESS:-0xa15314BBC07F0a2E6527E07CbBE8a3Ca7ADeF452}"
+          - "${ENVIO_DELIBERATE_ADDRESS}"
         events:
           - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
           - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)
