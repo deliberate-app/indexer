@@ -33,6 +33,7 @@ indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ eve
     editingEndTime: event.params.editingEndTime,
     ratingEndTime: event.params.ratingEndTime,
     feePercentage: event.params.feePercentage,
+    identityRegistry: addressOf(event.params.identityRegistry),
     finished: false,
     approved: undefined,
     totalVotes: 0n,

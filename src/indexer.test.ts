@@ -25,6 +25,7 @@ const debateCreated = {
     editingEndTime: 420n,
     ratingEndTime: 600n,
     feePercentage: 5n,
+    identityRegistry: `0x${"00".repeat(20)}`,
   },
 } as const;
 
