@@ -30,9 +30,9 @@ deployment's address into this repo's `.env` (`ENVIO_DELIBERATE_ADDRESS`), which
 interpolates - so the index follows the newest deployment even when a reused anvil moves the
 contract to a fresh nonce. Because the chain is ephemeral, so is the index: `just dev` wipes
 and re-indexes from block 0 on every start (local chains are small; this takes seconds).
-Hasura's GraphQL console comes up on http://localhost:8090 (moved off 8080, which the dev kubo
-gateway occupies - the recipe pins both the container port and envio's metadata endpoint there;
-local password `testing`).
+Hasura's GraphQL console comes up on http://localhost:8090 rather than envio's default 8080: the
+frontend dev tool reads the index there, so the recipe pins both the container port and envio's
+metadata endpoint to it (local password `testing`).
 
 The handler tests simulate event streams against an in-memory indexer - the lifecycle test
 replays the same numbers as the contract unit tests (seed at 80%, rate down, redeem at a
@@ -49,7 +49,6 @@ connected:
    directory `.`); the hosted service picks it up automatically.
 2. The Deliberate address and deployment block are in the config, copied from the contracts
    repo's broadcast record; a redeploy edits both and pushes.
-3. Optionally set `ENVIO_PIN_IPFS_API` once a pinning node exists (see below).
 
 Every push to `main` redeploys the indexer, and each deployment gets its own GraphQL endpoint -
 whose id is envio-internal rather than the commit's sha, so it can only be read, not derived: from
@@ -59,22 +58,6 @@ On the **hosted** frontend that endpoint goes into the server-side `INDEXER_UPST
 same-origin query proxy forwards to; the client calls the proxy (`/api/graphql/gnosis`), which does not
 change between deployments. A frontend running **locally** against this deployment has no proxy in
 front of it, and points `VITE_INDEXER_URL_GNOSIS` straight at the endpoint.
-
-## Production pinning backstop
-
-Argument texts are IPFS raw-leaves blocks whose sha-256 digests are public on-chain. When
-`ENVIO_PIN_IPFS_API` is set (e.g. `http://127.0.0.1:5001`), the indexer re-pins every content
-digest it sees - debate theses, added and altered arguments - on that kubo-compatible node, so
-content availability never depends on the authoring client alone (see the frontend README,
-"Production pinning strategy").
-
-The request goes through envio's Effect API (`src/pinning.ts`), which is what makes it exactly
-one call per distinct text: handlers run twice - once concurrently to preload, once to fold -
-and an effect is deduplicated across both, across the whole batch, and (through its cache)
-across reruns, so a resync does not re-ask for every text the node already holds. Pinning stays
-idempotent and best-effort: the call is capped by a timeout, only an acknowledged pin is cached,
-and a node that is down, slow, or missing the block never stalls or crashes indexing - the next
-event or resync asks again.
 
 ## Prerequisites
 

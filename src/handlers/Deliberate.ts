@@ -3,14 +3,12 @@
  * event carries the resulting state (reserves move additively, payouts arrive
  * pre-rounded), so the handlers mirror the debate without redoing any market math.
  *
- * Every handler opens with a single wave of reads (and, where a text is involved, the
- * pin request). Handlers run twice - once concurrently across the whole batch to warm
- * the caches, once sequentially to fold - and it is that first pass that turns a wave
- * of `Promise.all` reads into one batched query per entity for the entire batch, where
- * awaiting them one after another would cost a round trip each.
+ * Every handler opens with a single wave of reads. Handlers run twice - once concurrently
+ * across the whole batch to warm the caches, once sequentially to fold - and it is that
+ * first pass that turns a wave of `Promise.all` reads into one batched query per entity
+ * for the entire batch, where awaiting them one after another would cost a round trip each.
  */
 import { indexer } from "envio";
-import { pinDigest } from "../pinning";
 
 /** Addresses are normalized to lowercase, in entity IDs and fields alike. */
 const addressOf = (raw: string) => raw.toLowerCase();
@@ -22,8 +20,6 @@ const positionIdOf = (debateId: bigint, argumentId: bigint, account: string) =>
 
 indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ event, context }) => {
   const debateId = event.params.debateId.toString();
-
-  await pinDigest(context, event.params.contentURI);
 
   context.Debate.set({
     id: debateId,
@@ -89,7 +85,6 @@ indexer.onEvent({ contract: "Deliberate", event: "ArgumentAdded" }, async ({ eve
   const [debate, participant] = await Promise.all([
     context.Debate.getOrThrow(debateId.toString()),
     context.Participant.getOrThrow(participantIdOf(debateId, event.params.creator)),
-    pinDigest(context, event.params.contentURI),
   ]);
 
   context.Argument.set({
@@ -119,10 +114,7 @@ indexer.onEvent({ contract: "Deliberate", event: "ArgumentAdded" }, async ({ eve
 });
 
 indexer.onEvent({ contract: "Deliberate", event: "ArgumentAltered" }, async ({ event, context }) => {
-  const [argument] = await Promise.all([
-    context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId)),
-    pinDigest(context, event.params.contentURI),
-  ]);
+  const argument = await context.Argument.getOrThrow(argumentIdOf(event.params.debateId, event.params.argumentId));
 
   context.Argument.set({
     ...argument,

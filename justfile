@@ -1,11 +1,11 @@
 # Show commands before running (helps debug failures)
 set shell := ["bash", "-euo", "pipefail", "-c"]
-# .env carries the deployment handoff (ENVIO_DELIBERATE_ADDRESS, ENVIO_PIN_IPFS_API),
-# written by the frontend dev tool; loading it here makes every recipe see it.
+# .env carries the deployment handoff (ENVIO_DELIBERATE_ADDRESS), written by the
+# frontend dev tool; loading it here makes every recipe see it.
 set dotenv-load := true
 
-# Hasura lives on :8090 - the default (:8080) collides with the dev kubo gateway,
-# and envio's metadata client must be pointed there explicitly.
+# Hasura lives on :8090 rather than envio's default :8080 (the frontend dev tool reads
+# the index there), and envio's metadata client must be pointed there explicitly.
 hasura := "HASURA_EXTERNAL_PORT=8090 HASURA_GRAPHQL_ENDPOINT=http://localhost:8090/v1/metadata"
 
 # Local development runs against the anvil chain via config.local.yaml; the default
