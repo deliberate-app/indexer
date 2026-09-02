@@ -33,8 +33,8 @@ contracts:
 chains:
   # Gnosis Chain.
   - id: 100
-    start_block: 48049355
+    start_block: 48049642
     contracts:
       - name: Deliberate
         address:
-          - "0x45b256D21335a2Fa61F6060eA32bA2Ac95dEaC4d"
+          - "0x28b939ed3F67c8eaB198e46E9d41CcB4d19c6DE3"
