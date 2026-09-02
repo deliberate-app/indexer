@@ -9,7 +9,7 @@ contracts:
     events:
       - event: ArgumentCreated(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, string content, uint32 pro, uint32 con, uint48 finalizationTime)
       - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, string content, uint48 finalizationTime)
-      - event: ArgumentRated(uint256 indexed debateId, uint16 indexed argumentId, int64 rating)
+      - event: ArgumentRated(uint256 indexed debateId, uint16 indexed argumentId, int64 rating, uint32 subtreeStake)
       - event: ArgumentMoved(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed newParentArgumentId, uint16 oldParentArgumentId, uint32 pro, uint32 con)
       - event: DebateCreated(uint256 indexed debateId, address indexed creator, string content, uint48 lockingDuration, uint48 editingEndTime, uint48 ratingEndTime, uint8 feePercentage, address identityRegistry)
       - event: DebateFinished(uint256 indexed debateId, bool approved)

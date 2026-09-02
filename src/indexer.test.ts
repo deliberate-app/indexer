@@ -95,7 +95,7 @@ describe("the Deliberate indexer", () => {
             {
               contract: "Deliberate",
               event: "ArgumentRated",
-              params: { debateId: 0n, argumentId: 1n, rating: 90n },
+              params: { debateId: 0n, argumentId: 1n, rating: 90n, subtreeStake: 29n },
             },
             { contract: "Deliberate", event: "DebateFinished", params: { debateId: 0n, approved: true } },
             {
@@ -119,11 +119,15 @@ describe("the Deliberate indexer", () => {
     expect(debate.finishedAt).toBeDefined();
     expect(debate.argumentsCount).toBe(2n);
     expect(debate.participantsCount).toBe(2n);
-    expect(debate.totalVotes).toBe(29n); // 10 deposit + 19 net stake
+    expect(debate.totalStake).toBe(29n); // 10 deposit + 19 net stake
 
     const thesis = await indexer.Argument.getOrThrow(argumentId(0));
     expect(thesis.parent_id).toBeUndefined();
     expect(thesis.content).toBe(THESIS);
+    // The rating folds into its parent's numerator weighted by the stake the event carries, the
+    // same sum of products the contract accumulates: one supporting child at 90 over 29 stake.
+    expect(thesis.descendantsNumerator).toBe(90n * 29n);
+    expect(thesis.subtreeStake).toBe(0n); // the thesis is never rated, so nothing writes its own
 
     const argument = await indexer.Argument.getOrThrow(argumentId(1));
     expect(argument.parent_id).toBe(argumentId(0));
@@ -131,7 +135,7 @@ describe("the Deliberate indexer", () => {
     expect(argument.finalizationTime).toBe(90n);
     expect(argument.pro).toBe(21n); // 2 + 19 net
     expect(argument.con).toBe(1n); // 8 + 19 - 26 shares out
-    expect(argument.votes).toBe(29n);
+    expect(argument.stake).toBe(29n);
     expect(argument.fees).toBe(0n); // accrued 1, then claimed
     expect(argument.feesEarned).toBe(1n); // what staking on it has paid its author, claimed or not
     expect(argument.rating).toBe(90n);
@@ -251,7 +255,7 @@ describe("the Deliberate indexer", () => {
     const debate = await indexer.Debate.getOrThrow(DEBATE);
     expect(debate.finished).toBe(false);
     expect(debate.approved).toBeUndefined();
-    expect(debate.totalVotes).toBe(10n);
+    expect(debate.totalStake).toBe(10n);
 
     const argument = await indexer.Argument.getOrThrow(argumentId(1));
     expect(argument.content).toBe(ARGUMENT);
@@ -287,6 +291,6 @@ describe("the Deliberate indexer", () => {
     expect(moved.parent_id).toBe(argumentId(1));
     expect(moved.pro).toBe(2n);
     expect(moved.con).toBe(8n);
-    expect(moved.votes).toBe(10n); // the deposit is unchanged by a move
+    expect(moved.stake).toBe(10n); // the deposit is unchanged by a move
   });
 });

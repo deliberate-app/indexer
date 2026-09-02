@@ -46,7 +46,7 @@ indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ eve
     identityRegistry: addressOf(event.params.identityRegistry),
     finished: false,
     approved: undefined,
-    totalVotes: 0n,
+    totalStake: 0n,
     argumentsCount: 1n,
     participantsCount: 0n,
     finishedAt: undefined,
@@ -70,7 +70,9 @@ indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ eve
     finalizationTime: BigInt(event.block.timestamp),
     pro: 0n,
     con: 0n,
-    votes: 0n,
+    stake: 0n,
+    subtreeStake: 0n,
+    descendantsNumerator: 0n,
     fees: 0n,
     feesEarned: 0n,
     rating: undefined,
@@ -116,7 +118,9 @@ indexer.onEvent({ contract: "Deliberate", event: "ArgumentCreated" }, async ({ e
     finalizationTime,
     pro,
     con,
-    votes: deposit,
+    stake: deposit,
+    subtreeStake: 0n,
+    descendantsNumerator: 0n,
     fees: 0n,
     feesEarned: 0n,
     rating: undefined,
@@ -125,7 +129,7 @@ indexer.onEvent({ contract: "Deliberate", event: "ArgumentCreated" }, async ({ e
   context.Debate.set({
     ...debate,
     argumentsCount: debate.argumentsCount + 1n,
-    totalVotes: debate.totalVotes + deposit,
+    totalStake: debate.totalStake + deposit,
   });
 
   context.Participant.set({ ...participant, tokens: participant.tokens - deposit });
@@ -146,7 +150,7 @@ indexer.onEvent({ contract: "Deliberate", event: "ArgumentMoved" }, async ({ eve
   const chainId = event.chainId;
   const argument = await context.Argument.getOrThrow(argumentIdOf(chainId, event.params.debateId, event.params.argumentId));
   // The move re-parents the argument and re-seeds its market at a new approval; the deposit
-  // total (and so votes) is unchanged, only the pro/con split.
+  // total (and so stake) is unchanged, only the pro/con split.
   context.Argument.set({
     ...argument,
     parent_id: argumentIdOf(chainId, event.params.debateId, event.params.newParentArgumentId),
@@ -174,12 +178,12 @@ indexer.onEvent({ contract: "Deliberate", event: "Staked" }, async ({ event, con
     ...argument,
     pro: data.isPro ? argument.pro + net - data.sharesOut : argument.pro + net,
     con: data.isPro ? argument.con + net : argument.con + net - data.sharesOut,
-    votes: argument.votes + net,
+    stake: argument.stake + net,
     fees: argument.fees + data.fee,
     feesEarned: argument.feesEarned + data.fee,
   });
 
-  context.Debate.set({ ...debate, totalVotes: debate.totalVotes + net });
+  context.Debate.set({ ...debate, totalStake: debate.totalStake + net });
 
   context.Participant.set({ ...participant, tokens: participant.tokens - data.voteTokensStaked });
 
@@ -212,10 +216,24 @@ indexer.onEvent({ contract: "Deliberate", event: "Staked" }, async ({ event, con
 indexer.onEvent({ contract: "Deliberate", event: "ArgumentRated" }, async ({ event, context }) => {
   const chainId = event.chainId;
   // The emitted rating is signed - zero at the market's undecided price, negative meaning refuted.
-  // The sway on the parent is the rating clamped at zero, negated if the argument attacks, both
-  // recoverable from the stored stance; the clamp itself is not stored.
+  // A refuted argument is silenced rather than inverted, so its sway is the rating clamped at zero,
+  // negated if it attacks.
   const argument = await context.Argument.getOrThrow(argumentIdOf(chainId, event.params.debateId, event.params.argumentId));
-  context.Argument.set({ ...argument, rating: event.params.rating });
+  const strength = event.params.rating > 0n ? event.params.rating : 0n;
+  const sway = argument.isSupporting === false ? -strength : strength;
+
+  context.Argument.set({ ...argument, rating: event.params.rating, subtreeStake: event.params.subtreeStake });
+
+  // Fold the sway into the parent's numerator, weighted by the stake the event carries: a sum of
+  // products in integers, which is exactly what the contract accumulates - so the aggregate read
+  // back here is the chain's own rather than an approximation of it. The thesis has no parent.
+  if (argument.parent_id !== undefined) {
+    const parent = await context.Argument.getOrThrow(argument.parent_id);
+    context.Argument.set({
+      ...parent,
+      descendantsNumerator: parent.descendantsNumerator + sway * event.params.subtreeStake,
+    });
+  }
 });
 
 indexer.onEvent({ contract: "Deliberate", event: "DebateFinished" }, async ({ event, context }) => {

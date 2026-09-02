@@ -21,7 +21,7 @@ type Debate {
   "Whether the debate approved the thesis. Only set once `finished` is true."
   approved: Boolean
   "Vote tokens committed to the debate's markets (deposits plus net stakes)."
-  totalVotes: BigInt!
+  totalStake: BigInt!
   argumentsCount: BigInt!
   "The number of joined accounts - the N in the bounty payout denominator."
   participantsCount: BigInt!
@@ -89,7 +89,11 @@ type Argument {
   pro: BigInt!
   con: BigInt!
   "Vote tokens staked on this argument's market (deposit plus net stakes)."
-  votes: BigInt!
+  stake: BigInt!
+  "The stake this argument's rating folds into its parent with: its own time-weighted stake plus its whole subtree's. Written by the tally, zero before it."
+  subtreeStake: BigInt!
+  "The tally's weighted sum of this argument's children's sways - the numerator of their aggregate over `subtreeStake`, and zero until they are rated. Summed from the rating events, so it is the chain's own integer arithmetic rather than an approximation of it."
+  descendantsNumerator: BigInt!
   "Unclaimed market fees, claimable by the creator once the debate is finished."
   fees: BigInt!
   "Every market fee the argument has ever earned its creator, claimed or not - what staking on it has paid its author over its lifetime."
