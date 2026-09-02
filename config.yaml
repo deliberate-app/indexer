@@ -19,11 +19,11 @@ chains:
         address:
           - "0x260879778DE7A983565219c2C64f3b4cB927259a"
         events:
-          - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
-          - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)
+          - event: ArgumentCreated(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, string content, uint32 pro, uint32 con, uint48 finalizationTime)
+          - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, string content, uint48 finalizationTime)
           - event: ArgumentRated(uint256 indexed debateId, uint16 indexed argumentId, int64 rating)
           - event: ArgumentMoved(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed newParentArgumentId, uint16 oldParentArgumentId, uint32 pro, uint32 con)
-          - event: DebateCreated(uint256 indexed debateId, address indexed creator, bytes32 contentURI, uint48 lockingDuration, uint48 editingEndTime, uint48 ratingEndTime, uint8 feePercentage, address identityRegistry)
+          - event: DebateCreated(uint256 indexed debateId, address indexed creator, string content, uint48 lockingDuration, uint48 editingEndTime, uint48 ratingEndTime, uint8 feePercentage, address identityRegistry)
           - event: DebateFinished(uint256 indexed debateId, bool approved)
           - event: FeesClaimed(uint256 indexed debateId, uint16 indexed argumentId, address indexed creator, uint32 fees)
           - event: Staked(uint256 indexed debateId, uint16 indexed argumentId, address indexed staker, (bool isPro, uint32 voteTokensStaked, uint32 fee, uint32 sharesOut) data)

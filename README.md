@@ -10,6 +10,11 @@ Every contract event carries the resulting state (reserves move additively, payo
 pre-rounded), so the handlers mirror the debate without redoing any market math. The event set
 is documented in `contracts/src/interfaces/IDeliberate.sol`.
 
+The text of a thesis or argument (1 to 256 bytes of UTF-8) arrives in the `DebateCreated`,
+`ArgumentCreated` and `ArgumentAltered` events and is stored verbatim on the entity's `content`
+field - an alteration replaces it. Nothing is fetched from anywhere else: the index is complete
+from the event stream alone.
+
 ## Develop
 
 ```sh

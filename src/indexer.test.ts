@@ -10,9 +10,10 @@ const CHAIN = runtime.chainIds[0]!;
 
 const AUTHOR = "0x00000000000000000000000000000000000000aa";
 const RATER = "0x00000000000000000000000000000000000000bb";
-const THESIS_URI = `0x${"11".repeat(32)}`;
-const ARGUMENT_URI = `0x${"22".repeat(32)}`;
-const ALTERED_URI = `0x${"33".repeat(32)}`;
+// Texts arrive verbatim in the events - bytes of UTF-8, not a reference to fetch.
+const THESIS = "Cities should close their centres to cars";
+const ARGUMENT = "Air quality recovers within months";
+const ALTERED = "Air quality recovers within months – Paris measured it in 2024";
 
 const debateCreated = {
   contract: "Deliberate",
@@ -20,7 +21,7 @@ const debateCreated = {
   params: {
     debateId: 0n,
     creator: AUTHOR,
-    contentURI: THESIS_URI,
+    content: THESIS,
     lockingDuration: 60n,
     editingEndTime: 420n,
     ratingEndTime: 600n,
@@ -35,20 +36,20 @@ const joined = (account: `0x${string}`) => ({
   params: { debateId: 0n, account, tokens: 100n },
 }) as const;
 
-const argumentAdded = (
+const argumentCreated = (
   argumentId: bigint,
   parentArgumentId: bigint,
   { pro, con }: { pro: bigint; con: bigint },
 ) => ({
   contract: "Deliberate",
-  event: "ArgumentAdded",
+  event: "ArgumentCreated",
   params: {
     debateId: 0n,
     argumentId,
     parentArgumentId,
     creator: AUTHOR,
     isSupporting: true,
-    contentURI: ARGUMENT_URI,
+    content: ARGUMENT,
     pro,
     con,
     finalizationTime: 60n,
@@ -69,11 +70,11 @@ describe("the Deliberate indexer", () => {
             debateCreated,
             joined(AUTHOR),
             joined(RATER),
-            argumentAdded(1n, 0n, { pro: 2n, con: 8n }),
+            argumentCreated(1n, 0n, { pro: 2n, con: 8n }),
             {
               contract: "Deliberate",
               event: "ArgumentAltered",
-              params: { debateId: 0n, argumentId: 1n, contentURI: ALTERED_URI, finalizationTime: 90n },
+              params: { debateId: 0n, argumentId: 1n, content: ALTERED, finalizationTime: 90n },
             },
             {
               contract: "Deliberate",
@@ -116,11 +117,11 @@ describe("the Deliberate indexer", () => {
 
     const thesis = await indexer.Argument.getOrThrow("0_0");
     expect(thesis.parent_id).toBeUndefined();
-    expect(thesis.contentURI).toBe(THESIS_URI);
+    expect(thesis.content).toBe(THESIS);
 
     const argument = await indexer.Argument.getOrThrow("0_1");
     expect(argument.parent_id).toBe("0_0");
-    expect(argument.contentURI).toBe(ALTERED_URI);
+    expect(argument.content).toBe(ALTERED); // the alteration replaced the text it was created with
     expect(argument.finalizationTime).toBe(90n);
     expect(argument.pro).toBe(21n); // 2 + 19 net
     expect(argument.con).toBe(1n); // 8 + 19 - 26 shares out
@@ -236,7 +237,7 @@ describe("the Deliberate indexer", () => {
     await indexer.process({
       chains: {
         [CHAIN]: {
-          simulate: [debateCreated, joined(AUTHOR), argumentAdded(1n, 0n, { pro: 5n, con: 5n })],
+          simulate: [debateCreated, joined(AUTHOR), argumentCreated(1n, 0n, { pro: 5n, con: 5n })],
         },
       },
     });
@@ -247,6 +248,7 @@ describe("the Deliberate indexer", () => {
     expect(debate.totalVotes).toBe(10n);
 
     const argument = await indexer.Argument.getOrThrow("0_1");
+    expect(argument.content).toBe(ARGUMENT);
     expect(argument.rating).toBeUndefined();
 
     const author = await indexer.Participant.getOrThrow(`0_${AUTHOR}`);
@@ -262,8 +264,8 @@ describe("the Deliberate indexer", () => {
           simulate: [
             debateCreated,
             joined(AUTHOR),
-            argumentAdded(1n, 0n, { pro: 5n, con: 5n }),
-            argumentAdded(2n, 0n, { pro: 5n, con: 5n }),
+            argumentCreated(1n, 0n, { pro: 5n, con: 5n }),
+            argumentCreated(2n, 0n, { pro: 5n, con: 5n }),
             {
               contract: "Deliberate",
               event: "ArgumentMoved",

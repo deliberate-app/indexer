@@ -24,7 +24,7 @@ indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ eve
   context.Debate.set({
     id: debateId,
     creator: addressOf(event.params.creator),
-    contentURI: event.params.contentURI,
+    content: event.params.content,
     lockingDuration: event.params.lockingDuration,
     editingEndTime: event.params.editingEndTime,
     ratingEndTime: event.params.ratingEndTime,
@@ -51,7 +51,7 @@ indexer.onEvent({ contract: "Deliberate", event: "DebateCreated" }, async ({ eve
     parent_id: undefined,
     creator: addressOf(event.params.creator),
     isSupporting: undefined,
-    contentURI: event.params.contentURI,
+    content: event.params.content,
     finalizationTime: BigInt(event.block.timestamp),
     pro: 0n,
     con: 0n,
@@ -77,7 +77,7 @@ indexer.onEvent({ contract: "Deliberate", event: "Joined" }, async ({ event, con
   context.Debate.set({ ...debate, participantsCount: debate.participantsCount + 1n });
 });
 
-indexer.onEvent({ contract: "Deliberate", event: "ArgumentAdded" }, async ({ event, context }) => {
+indexer.onEvent({ contract: "Deliberate", event: "ArgumentCreated" }, async ({ event, context }) => {
   const { debateId, argumentId, parentArgumentId, pro, con, finalizationTime } = event.params;
   // The creator's deposit seeds the market; the split is lossless, so the two reserves are it.
   const deposit = pro + con;
@@ -94,7 +94,7 @@ indexer.onEvent({ contract: "Deliberate", event: "ArgumentAdded" }, async ({ eve
     parent_id: argumentIdOf(debateId, parentArgumentId),
     creator: addressOf(event.params.creator),
     isSupporting: event.params.isSupporting,
-    contentURI: event.params.contentURI,
+    content: event.params.content,
     finalizationTime,
     pro,
     con,
@@ -118,7 +118,7 @@ indexer.onEvent({ contract: "Deliberate", event: "ArgumentAltered" }, async ({ e
 
   context.Argument.set({
     ...argument,
-    contentURI: event.params.contentURI,
+    content: event.params.content,
     finalizationTime: event.params.finalizationTime,
   });
 });
