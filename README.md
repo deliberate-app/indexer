@@ -55,10 +55,10 @@ Every push to `main` redeploys the indexer, and each deployment gets its own Gra
 whose id is envio-internal rather than the commit's sha, so it can only be read, not derived: from
 the deployment page, or with `npx envio-cloud deployment endpoint <indexer> <commit> <organisation>`.
 
-On the **hosted** frontend that endpoint goes into the server-side `INDEXER_UPSTREAM_URL`, which its
-same-origin query proxy forwards to; `VITE_INDEXER_URL` names the proxy (`/api/graphql`) and does not
+On the **hosted** frontend that endpoint goes into the server-side `INDEXER_UPSTREAM_URL_GNOSIS`, which its
+same-origin query proxy forwards to; the client calls the proxy (`/api/graphql/gnosis`), which does not
 change between deployments. A frontend running **locally** against this deployment has no proxy in
-front of it, and points `VITE_INDEXER_URL` straight at the endpoint.
+front of it, and points `VITE_INDEXER_URL_GNOSIS` straight at the endpoint.
 
 ## Production pinning backstop
 
