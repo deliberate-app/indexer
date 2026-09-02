@@ -1,7 +1,11 @@
 "A debate: its thesis, phase clock, and aggregates. The thesis is the argument with `argumentId` 0."
 type Debate {
-  "The on-chain debate ID."
+  "`{chainId}_{debateId}` - debate IDs restart at zero on every chain, so identity carries the chain."
   id: ID!
+  "The chain this debate lives on. One indexer serves them all, so a client filters on this."
+  chainId: Int!
+  "The on-chain debate ID, which is only unique within its chain."
+  debateId: BigInt!
   creator: String!
   "The thesis text, verbatim from the DebateCreated event (1 to 256 bytes of UTF-8)."
   content: String!
@@ -39,7 +43,7 @@ type Debate {
 
 "One participant's bounty claim (one-shot per participant and debate)."
 type BountyClaim {
-  "`{debateId}_{account}`"
+  "`{chainId}_{debateId}_{account}`"
   id: ID!
   debate: Debate!
   account: String!
@@ -65,9 +69,12 @@ type BountyFunding {
 
 "A node of a debate's argument tree, carrying its market reserves."
 type Argument {
-  "`{debateId}_{argumentId}`"
+  "`{chainId}_{debateId}_{argumentId}`"
   id: ID!
   debate: Debate!
+  "The chain this argument lives on, copied from its debate so a client can filter without a join."
+  chainId: Int!
+  "The on-chain argument ID, unique within its debate. The thesis is 0."
   argumentId: BigInt!
   "The parent argument. Unset for the thesis."
   parent: Argument
@@ -98,7 +105,7 @@ type Argument {
 
 "A debate participant and their vote-token balance, mirrored from the event stream."
 type Participant {
-  "`{debateId}_{account}`"
+  "`{chainId}_{debateId}_{account}`"
   id: ID!
   debate: Debate!
   account: String!
@@ -109,7 +116,7 @@ type Participant {
 
 "An account's current share holdings in one argument's market."
 type Position {
-  "`{debateId}_{argumentId}_{account}`"
+  "`{chainId}_{debateId}_{argumentId}_{account}`"
   id: ID!
   argument: Argument!
   "The participant holding the shares, scoped to this debate."

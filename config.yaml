@@ -1,34 +1,40 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
-# The default config: the Gnosis Chain deployment, indexed by the Envio hosted service (HyperSync, no RPC needed).
+# The hosted config: every chain Deliberate is deployed to, indexed by the Envio hosted service
+# (HyperSync, no RPC needed) and served from one GraphQL endpoint.
 #
-# One indexer per network, each from its own config: debate ids restart at zero on every
-# deployment, so two chains in one config would collide on entity ids. The frontend reads each
-# network through its own proxy route (/api/graphql/<slug>) for the same reason.
+# One indexer, not one per chain. Entity IDs carry the chain they happened on
+# (`{chainId}_{debateId}`), so debate 0 on one chain and debate 0 on another are different rows
+# and a client asks for the chain it wants. Adding a chain is an entry under `chains` - the
+# contract, its ABI and its events are declared once below and shared by all of them.
 #
-# The address and start block are the deployment's, from the contracts repo's broadcast record
-# (broadcast/DeployDeliberate.s.sol/100/run-latest.json); a redeploy edits both here. Only the
-# local config interpolates the address, because anvil moves it on every run.
+# `config.local.yaml` is the same indexer against the local anvil chain. It is a separate file
+# for one reason: a chain served over a localhost RPC cannot be reached from the hosted service,
+# so it cannot live here.
 #
-# The event list must stay in sync with config.local.yaml (the local anvil config).
-name: deliberate-indexer-gnosis
+# Each chain's address and start block are its deployment's, from the contracts repo's broadcast
+# record (broadcast/DeployDeliberate.s.sol/<chainId>/run-latest.json); a redeploy edits both.
+name: deliberate-indexer
+contracts:
+  - name: Deliberate
+    events:
+      - event: ArgumentCreated(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, string content, uint32 pro, uint32 con, uint48 finalizationTime)
+      - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, string content, uint48 finalizationTime)
+      - event: ArgumentRated(uint256 indexed debateId, uint16 indexed argumentId, int64 rating)
+      - event: ArgumentMoved(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed newParentArgumentId, uint16 oldParentArgumentId, uint32 pro, uint32 con)
+      - event: DebateCreated(uint256 indexed debateId, address indexed creator, string content, uint48 lockingDuration, uint48 editingEndTime, uint48 ratingEndTime, uint8 feePercentage, address identityRegistry)
+      - event: DebateFinished(uint256 indexed debateId, bool approved)
+      - event: FeesClaimed(uint256 indexed debateId, uint16 indexed argumentId, address indexed creator, uint32 fees)
+      - event: Staked(uint256 indexed debateId, uint16 indexed argumentId, address indexed staker, (bool isPro, uint32 voteTokensStaked, uint32 fee, uint32 sharesOut) data)
+      - event: Joined(uint256 indexed debateId, address indexed account, uint32 tokens)
+      - event: SharesRedeemed(uint256 indexed debateId, uint16 indexed argumentId, address indexed account, uint32 proShares, uint32 conShares, uint32 payout)
+      - event: BountyFunded(uint256 indexed debateId, address indexed funder, address indexed token, uint256 amount, uint256 pool)
+      - event: BountyClaimed(uint256 indexed debateId, address indexed account, uint32 excess, uint256 amount)
+      - event: BountySwept(uint256 indexed debateId, address indexed creator, uint256 amount)
 chains:
+  # Gnosis Chain.
   - id: 100
     start_block: 48046147
     contracts:
       - name: Deliberate
         address:
           - "0xCA2449a3849B2a6dDc673613F24760ff366d6b09"
-        events:
-          - event: ArgumentCreated(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, string content, uint32 pro, uint32 con, uint48 finalizationTime)
-          - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, string content, uint48 finalizationTime)
-          - event: ArgumentRated(uint256 indexed debateId, uint16 indexed argumentId, int64 rating)
-          - event: ArgumentMoved(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed newParentArgumentId, uint16 oldParentArgumentId, uint32 pro, uint32 con)
-          - event: DebateCreated(uint256 indexed debateId, address indexed creator, string content, uint48 lockingDuration, uint48 editingEndTime, uint48 ratingEndTime, uint8 feePercentage, address identityRegistry)
-          - event: DebateFinished(uint256 indexed debateId, bool approved)
-          - event: FeesClaimed(uint256 indexed debateId, uint16 indexed argumentId, address indexed creator, uint32 fees)
-          - event: Staked(uint256 indexed debateId, uint16 indexed argumentId, address indexed staker, (bool isPro, uint32 voteTokensStaked, uint32 fee, uint32 sharesOut) data)
-          - event: Joined(uint256 indexed debateId, address indexed account, uint32 tokens)
-          - event: SharesRedeemed(uint256 indexed debateId, uint16 indexed argumentId, address indexed account, uint32 proShares, uint32 conShares, uint32 payout)
-          - event: BountyFunded(uint256 indexed debateId, address indexed funder, address indexed token, uint256 amount, uint256 pool)
-          - event: BountyClaimed(uint256 indexed debateId, address indexed account, uint32 excess, uint256 amount)
-          - event: BountySwept(uint256 indexed debateId, address indexed creator, uint256 amount)

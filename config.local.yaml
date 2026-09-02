@@ -1,7 +1,25 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
-# The local anvil config, used by the justfile's dev recipes (`just dev`). The default
-# config.yaml targets Base Sepolia for the Envio hosted service.
+# The local anvil config, used by the justfile's dev recipes (`just dev`). Same indexer as
+# config.yaml, same handlers and schema; only the chain differs. It is a separate file because a
+# chain served over a localhost RPC cannot be reached from the hosted service, so anvil cannot be
+# an entry in the hosted config's `chains`.
 name: deliberate-indexer
+contracts:
+  - name: Deliberate
+    events:
+      - event: ArgumentCreated(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, string content, uint32 pro, uint32 con, uint48 finalizationTime)
+      - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, string content, uint48 finalizationTime)
+      - event: ArgumentRated(uint256 indexed debateId, uint16 indexed argumentId, int64 rating)
+      - event: ArgumentMoved(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed newParentArgumentId, uint16 oldParentArgumentId, uint32 pro, uint32 con)
+      - event: DebateCreated(uint256 indexed debateId, address indexed creator, string content, uint48 lockingDuration, uint48 editingEndTime, uint48 ratingEndTime, uint8 feePercentage, address identityRegistry)
+      - event: DebateFinished(uint256 indexed debateId, bool approved)
+      - event: FeesClaimed(uint256 indexed debateId, uint16 indexed argumentId, address indexed creator, uint32 fees)
+      - event: Staked(uint256 indexed debateId, uint16 indexed argumentId, address indexed staker, (bool isPro, uint32 voteTokensStaked, uint32 fee, uint32 sharesOut) data)
+      - event: Joined(uint256 indexed debateId, address indexed account, uint32 tokens)
+      - event: SharesRedeemed(uint256 indexed debateId, uint16 indexed argumentId, address indexed account, uint32 proShares, uint32 conShares, uint32 payout)
+      - event: BountyFunded(uint256 indexed debateId, address indexed funder, address indexed token, uint256 amount, uint256 pool)
+      - event: BountyClaimed(uint256 indexed debateId, address indexed account, uint32 excess, uint256 amount)
+      - event: BountySwept(uint256 indexed debateId, address indexed creator, uint256 amount)
 chains:
   # The local anvil dev chain. Every `just dev-anvil` run in ../frontend writes its
   # deployment's address into .env (ENVIO_DELIBERATE_ADDRESS) - a reused anvil moves
@@ -14,17 +32,3 @@ chains:
       - name: Deliberate
         address:
           - "${ENVIO_DELIBERATE_ADDRESS:-0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512}"
-        events:
-          - event: ArgumentCreated(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, string content, uint32 pro, uint32 con, uint48 finalizationTime)
-          - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, string content, uint48 finalizationTime)
-          - event: ArgumentRated(uint256 indexed debateId, uint16 indexed argumentId, int64 rating)
-          - event: ArgumentMoved(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed newParentArgumentId, uint16 oldParentArgumentId, uint32 pro, uint32 con)
-          - event: DebateCreated(uint256 indexed debateId, address indexed creator, string content, uint48 lockingDuration, uint48 editingEndTime, uint48 ratingEndTime, uint8 feePercentage, address identityRegistry)
-          - event: DebateFinished(uint256 indexed debateId, bool approved)
-          - event: FeesClaimed(uint256 indexed debateId, uint16 indexed argumentId, address indexed creator, uint32 fees)
-          - event: Staked(uint256 indexed debateId, uint16 indexed argumentId, address indexed staker, (bool isPro, uint32 voteTokensStaked, uint32 fee, uint32 sharesOut) data)
-          - event: Joined(uint256 indexed debateId, address indexed account, uint32 tokens)
-          - event: SharesRedeemed(uint256 indexed debateId, uint16 indexed argumentId, address indexed account, uint32 proShares, uint32 conShares, uint32 payout)
-          - event: BountyFunded(uint256 indexed debateId, address indexed funder, address indexed token, uint256 amount, uint256 pool)
-          - event: BountyClaimed(uint256 indexed debateId, address indexed account, uint32 excess, uint256 amount)
-          - event: BountySwept(uint256 indexed debateId, address indexed creator, uint256 amount)

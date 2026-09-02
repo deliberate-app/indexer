@@ -2,11 +2,17 @@ import { describe, expect, it } from "vitest";
 import { createTestIndexer, indexer as runtime } from "envio";
 
 /**
- * The chain the loaded config declares - config.local.yaml's anvil (31337) under the
- * `just` recipes, Base Sepolia under the default config. Taking it from the indexer
- * rather than hard-coding it keeps these tests passing whichever config is loaded.
+ * The chain the loaded config declares - config.local.yaml's anvil (31337) under the `just`
+ * recipes, Gnosis under the hosted config. Taking it from the indexer rather than hard-coding it
+ * keeps these tests passing whichever config is loaded.
  */
 const CHAIN = runtime.chainIds[0]!;
+
+// Entity IDs open with the chain, because one indexer serves every chain the contract is on.
+const DEBATE = `${CHAIN}_0`;
+const argumentId = (id: number) => `${DEBATE}_${id}`;
+const participantId = (account: string) => `${DEBATE}_${account}`;
+const positionId = (id: number, account: string) => `${argumentId(id)}_${account}`;
 
 const AUTHOR = "0x00000000000000000000000000000000000000aa";
 const RATER = "0x00000000000000000000000000000000000000bb";
@@ -107,7 +113,7 @@ describe("the Deliberate indexer", () => {
       },
     });
 
-    const debate = await indexer.Debate.getOrThrow("0");
+    const debate = await indexer.Debate.getOrThrow(DEBATE);
     expect(debate.finished).toBe(true);
     expect(debate.approved).toBe(true);
     expect(debate.finishedAt).toBeDefined();
@@ -115,12 +121,12 @@ describe("the Deliberate indexer", () => {
     expect(debate.participantsCount).toBe(2n);
     expect(debate.totalVotes).toBe(29n); // 10 deposit + 19 net stake
 
-    const thesis = await indexer.Argument.getOrThrow("0_0");
+    const thesis = await indexer.Argument.getOrThrow(argumentId(0));
     expect(thesis.parent_id).toBeUndefined();
     expect(thesis.content).toBe(THESIS);
 
-    const argument = await indexer.Argument.getOrThrow("0_1");
-    expect(argument.parent_id).toBe("0_0");
+    const argument = await indexer.Argument.getOrThrow(argumentId(1));
+    expect(argument.parent_id).toBe(argumentId(0));
     expect(argument.content).toBe(ALTERED); // the alteration replaced the text it was created with
     expect(argument.finalizationTime).toBe(90n);
     expect(argument.pro).toBe(21n); // 2 + 19 net
@@ -132,16 +138,16 @@ describe("the Deliberate indexer", () => {
 
     // Token balances mirror the chain: the author paid the deposit and claimed
     // the fee, the correcting rater redeemed at a profit.
-    const author = await indexer.Participant.getOrThrow(`0_${AUTHOR}`);
+    const author = await indexer.Participant.getOrThrow(participantId(AUTHOR));
     expect(author.tokens).toBe(91n); // 100 - 10 deposit + 1 fee
-    const rater = await indexer.Participant.getOrThrow(`0_${RATER}`);
+    const rater = await indexer.Participant.getOrThrow(participantId(RATER));
     expect(rater.tokens).toBe(104n); // 100 - 20 staked + 24 payout
 
     // The append-only histories keep what the folded entities flatten away: the stake
     // that moved the market, and the redemption that settled it.
     const [stake] = await indexer.Stake.getAll();
     expect(stake).toMatchObject({
-      argument_id: "0_1",
+      argument_id: argumentId(1),
       staker: RATER,
       isPro: false,
       voteTokensStaked: 20n,
@@ -150,19 +156,19 @@ describe("the Deliberate indexer", () => {
     });
     const [redemption] = await indexer.Redemption.getAll();
     expect(redemption).toMatchObject({
-      argument_id: "0_1",
+      argument_id: argumentId(1),
       account: RATER,
       proShares: 0n,
       conShares: 26n,
       payout: 24n,
     });
 
-    const position = await indexer.Position.getOrThrow(`0_1_${RATER}`);
+    const position = await indexer.Position.getOrThrow(positionId(1, RATER));
     expect(position.proShares).toBe(0n);
     expect(position.conShares).toBe(0n); // redeemed
     // The position links back to its participant, so the debate's positions are
     // reachable as `Participant.positions` - the array the batch-redeem flow reads.
-    expect(position.participant_id).toBe(`0_${RATER}`);
+    expect(position.participant_id).toBe(participantId(RATER));
   });
 
   it("folds the bounty lifecycle: funding, top-up, claim, and sweep", async () => {
@@ -204,7 +210,7 @@ describe("the Deliberate indexer", () => {
       },
     });
 
-    const debate = await indexer.Debate.getOrThrow("0");
+    const debate = await indexer.Debate.getOrThrow(DEBATE);
     expect(debate.bountyToken).toBe(TOKEN.toLowerCase());
     expect(debate.bountyPool).toBe(350n);
     expect(debate.bountyClaimed).toBe(7n);
@@ -221,13 +227,13 @@ describe("the Deliberate indexer", () => {
     ]);
 
     // The claim is one-shot per participant, so it is keyed like one.
-    const claim = await indexer.BountyClaim.getOrThrow(`0_${RATER}`);
-    expect(claim.debate_id).toBe("0");
+    const claim = await indexer.BountyClaim.getOrThrow(participantId(RATER));
+    expect(claim.debate_id).toBe(DEBATE);
     expect(claim.excess).toBe(4n);
     expect(claim.amount).toBe(7n);
 
     // The claim pays ERC-20, never vote tokens.
-    const rater = await indexer.Participant.getOrThrow(`0_${RATER}`);
+    const rater = await indexer.Participant.getOrThrow(participantId(RATER));
     expect(rater.tokens).toBe(100n);
   });
 
@@ -242,16 +248,16 @@ describe("the Deliberate indexer", () => {
       },
     });
 
-    const debate = await indexer.Debate.getOrThrow("0");
+    const debate = await indexer.Debate.getOrThrow(DEBATE);
     expect(debate.finished).toBe(false);
     expect(debate.approved).toBeUndefined();
     expect(debate.totalVotes).toBe(10n);
 
-    const argument = await indexer.Argument.getOrThrow("0_1");
+    const argument = await indexer.Argument.getOrThrow(argumentId(1));
     expect(argument.content).toBe(ARGUMENT);
     expect(argument.rating).toBeUndefined();
 
-    const author = await indexer.Participant.getOrThrow(`0_${AUTHOR}`);
+    const author = await indexer.Participant.getOrThrow(participantId(AUTHOR));
     expect(author.tokens).toBe(90n);
   });
 
@@ -277,8 +283,8 @@ describe("the Deliberate indexer", () => {
       },
     });
 
-    const moved = await indexer.Argument.getOrThrow("0_2");
-    expect(moved.parent_id).toBe("0_1");
+    const moved = await indexer.Argument.getOrThrow(argumentId(2));
+    expect(moved.parent_id).toBe(argumentId(1));
     expect(moved.pro).toBe(2n);
     expect(moved.con).toBe(8n);
     expect(moved.votes).toBe(10n); // the deposit is unchanged by a move
