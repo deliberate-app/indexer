@@ -19,7 +19,7 @@ just test      # type-check + handler tests (in-memory, no database needed)
 just dev       # run against the local anvil chain (docker: postgres + hasura)
 ```
 
-Two configs: `config.yaml` (the default) targets Base Sepolia for the Envio hosted service;
+Two configs: `config.yaml` (the default) targets Gnosis Chain for the Envio hosted service;
 `config.local.yaml` targets the local anvil chain. The `just` dev recipes point envio at the
 local config (`--config config.local.yaml` / `ENVIO_CONFIG`), so plain `envio` commands still
 default to the hosted config.
@@ -39,17 +39,16 @@ replays the same numbers as the contract unit tests (seed at 80%, rate down, red
 profit), asserting that the folded entities match the chain exactly. `config.test.ts` guards
 the one thing the two configs must share: the event list, which would otherwise drift silently.
 
-## Hosted service (Base Sepolia)
+## Hosted service (Gnosis Chain)
 
-The default `config.yaml` indexes the Base Sepolia deployment (chain 84532) via HyperSync -
+The default `config.yaml` indexes the Gnosis Chain deployment (chain 100) via HyperSync -
 no RPC endpoint needed. On [envio.dev](https://envio.dev)'s hosted service, with this repo
 connected:
 
 1. Leave the deployment's **config file** at the default `config.yaml` (branch `main`, root
    directory `.`); the hosted service picks it up automatically.
-2. The Deliberate address and deployment block are already in the config. To point at a
-   redeploy without editing it, set `ENVIO_DELIBERATE_ADDRESS` in the **environment variables**
-   tab instead.
+2. The Deliberate address and deployment block are in the config, copied from the contracts
+   repo's broadcast record; a redeploy edits both and pushes.
 3. Optionally set `ENVIO_PIN_IPFS_API` once a pinning node exists (see below).
 
 Every push to `main` redeploys the indexer, and each deployment gets its own GraphQL endpoint -

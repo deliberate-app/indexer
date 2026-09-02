@@ -5,19 +5,19 @@
 # deployment, so two chains in one config would collide on entity ids. The frontend reads each
 # network through its own proxy route (/api/graphql/<slug>) for the same reason.
 #
-# The address is the deployed Deliberate (the interpolation lets ENVIO_DELIBERATE_ADDRESS in the
-# hosted service's environment-variables tab override it). The start block is the deployment's
-# block; set both from the broadcast record after deploying.
+# The address and start block are the deployment's, from the contracts repo's broadcast record
+# (broadcast/DeployDeliberate.s.sol/100/run-latest.json); a redeploy edits both here. Only the
+# local config interpolates the address, because anvil moves it on every run.
 #
 # The event list must stay in sync with config.local.yaml (the local anvil config).
 name: deliberate-indexer-gnosis
 chains:
   - id: 100
-    start_block: 0  # set to the deployment block after deploying
+    start_block: 48042054
     contracts:
       - name: Deliberate
         address:
-          - "${ENVIO_DELIBERATE_ADDRESS}"
+          - "0x260879778DE7A983565219c2C64f3b4cB927259a"
         events:
           - event: ArgumentAdded(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, bytes32 contentURI, uint32 pro, uint32 con, uint48 finalizationTime)
           - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, bytes32 contentURI, uint48 finalizationTime)
