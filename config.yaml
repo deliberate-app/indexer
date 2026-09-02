@@ -13,11 +13,11 @@
 name: deliberate-indexer-gnosis
 chains:
   - id: 100
-    start_block: 48042054
+    start_block: 48046147
     contracts:
       - name: Deliberate
         address:
-          - "0x260879778DE7A983565219c2C64f3b4cB927259a"
+          - "0xCA2449a3849B2a6dDc673613F24760ff366d6b09"
         events:
           - event: ArgumentCreated(uint256 indexed debateId, uint16 indexed argumentId, uint16 indexed parentArgumentId, address creator, bool isSupporting, string content, uint32 pro, uint32 con, uint48 finalizationTime)
           - event: ArgumentAltered(uint256 indexed debateId, uint16 indexed argumentId, string content, uint48 finalizationTime)
