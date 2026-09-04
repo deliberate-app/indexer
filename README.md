@@ -81,5 +81,6 @@ front of it, and points `VITE_INDEXER_URL` straight at the endpoint.
 `IdentityRegistryFactory` clones registries at runtime, so the indexer registers each allowlist from the
 factory's `AllowlistRegistryCreated` event and folds its `MembershipSet` and `OwnershipTransferred` events
 from then on. An `IdentityRegistry` row holds what a debate creator picks from (an allowlist by owner, a
-Circles registry by anchor); a `Membership` row is one account's standing on one allowlist. The factory
-address on Gnosis is a placeholder until `just deploy-registry-factory gnosis` runs in the contracts repo.
+Circles registry by anchor) and names the factory that made it; a `Membership` row is one account's
+standing on one allowlist. Factories are immutable, so a newer one is listed beside the old in the config,
+each from its own start block, and a client prefers registries from the current one.

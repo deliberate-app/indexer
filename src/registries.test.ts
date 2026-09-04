@@ -10,6 +10,7 @@ const OTHER = "0x00000000000000000000000000000000000000dd";
 const ALLOWLIST = "0x0000000000000000000000000000000000000a11";
 const CIRCLES = "0x0000000000000000000000000000000000000c11";
 const ZERO: `0x${string}` = `0x${"00".repeat(20)}`;
+const FACTORY = "0x0000000000000000000000000000000000000fac";
 
 const registryId = (address: string) => `${CHAIN}_${address}`;
 const membershipId = (registry: string, account: string) => `${registryId(registry)}_${account}`;
@@ -17,12 +18,14 @@ const membershipId = (registry: string, account: string) => `${registryId(regist
 const allowlistCreated = {
   contract: "IdentityRegistryFactory",
   event: "AllowlistRegistryCreated",
+  srcAddress: FACTORY,
   params: { registry: ALLOWLIST, owner: OWNER },
 } as const;
 
 const circlesCreated = {
   contract: "IdentityRegistryFactory",
   event: "CirclesRegistryCreated",
+  srcAddress: FACTORY,
   params: { registry: CIRCLES, anchor: ZERO, requireHuman: true },
 } as const;
 
@@ -42,6 +45,7 @@ describe("the identity registry indexer", () => {
 
     const allowlist = await indexer.IdentityRegistry.getOrThrow(registryId(ALLOWLIST));
     expect(allowlist.kind).toBe("ALLOWLIST");
+    expect(allowlist.factory).toBe(FACTORY);
     expect(allowlist.owner).toBe(OWNER);
     expect(allowlist.anchor).toBeUndefined();
 

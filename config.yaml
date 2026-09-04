@@ -48,8 +48,8 @@ chains:
       - name: Deliberate
         address:
           - "0x28b939ed3F67c8eaB198e46E9d41CcB4d19c6DE3"
-      # Not deployed yet. The zero address indexes nothing; replace it with the address and start block
-      # `just deploy-registry-factory gnosis` prints in the contracts repo.
+      # Factories are immutable: a newer one is added here beside the old, each from its own block.
       - name: IdentityRegistryFactory
+        start_block: 48084197
         address:
-          - "0x0000000000000000000000000000000000000000"
+          - "0x215b49E5Ca4b4f7A7C67777d2F840Ec1a9636ad2"
