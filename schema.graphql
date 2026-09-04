@@ -169,6 +169,8 @@ type IdentityRegistry {
   "The registry's address, lowercase."
   address: String!
   kind: RegistryKind!
+  "The factory that cloned it, lowercase. Factories are immutable and superseded by newer ones, so a client can prefer registries from the current factory and label the rest."
+  factory: String!
   "The account that keeps the list. Allowlists only; it follows `OwnershipTransferred`."
   owner: String
   "The Circles avatar whose trust admits an account. Circles registries only; the zero address admits every registered human."
