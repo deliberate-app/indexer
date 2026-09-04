@@ -154,3 +154,39 @@ type Redemption {
   payout: BigInt!
   timestamp: BigInt!
 }
+
+"The kind of registry the factory cloned."
+enum RegistryKind {
+  ALLOWLIST
+  CIRCLES
+}
+
+"An identity registry the factory created. A debate names one at creation to decide who may join."
+type IdentityRegistry {
+  "`{chainId}_{address}` - the registry's address, prefixed with its chain."
+  id: ID!
+  chainId: Int!
+  "The registry's address, lowercase."
+  address: String!
+  kind: RegistryKind!
+  "The account that keeps the list. Allowlists only; it follows `OwnershipTransferred`."
+  owner: String
+  "The Circles avatar whose trust admits an account. Circles registries only; the zero address admits every registered human."
+  anchor: String
+  "Whether an admitted account must also be a registered Circles human. Circles registries only."
+  requireHuman: Boolean
+  "The chain time the factory created it."
+  createdAt: BigInt!
+  memberships: [Membership!]! @derivedFrom(field: "registry")
+}
+
+"One account's standing on an allowlist. A removed account keeps its row with `member` false, so a list's history stays readable."
+type Membership {
+  "`{chainId}_{registry}_{account}`"
+  id: ID!
+  registry: IdentityRegistry!
+  account: String!
+  member: Boolean!
+  "The chain time of the last change."
+  updatedAt: BigInt!
+}
